@@ -55,7 +55,7 @@ const validate = (passport) => {
 };
 
 fs.readFile('Day04/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n');
+    const puzzle_input = contents.split('\n');
     const passports = parse(puzzle_input);
     const validPassports = passports.reduce((acc, p) => (validate(p) ? acc + 1 : acc), 0);
     console.log('Valid passports:', validPassports);

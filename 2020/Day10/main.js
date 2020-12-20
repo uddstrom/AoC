@@ -20,7 +20,7 @@ const partTwo = (adapters) => {
 };
 
 fs.readFile('Day10/puzzle_input', 'utf8', function (err, contents) {
-    const input = contents.split('\r\n').map(Number);
+    const input = contents.split('\n').map(Number);
     const adapters = input.concat([0, Math.max(...input) + 3]).sort((a, b) => a - b);
 
     console.log('Part 1:', partOne(adapters));

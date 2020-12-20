@@ -36,7 +36,7 @@ const findContiguousSet = (xmas, target) => {
 };
 
 fs.readFile('Day09/puzzle_input', 'utf8', function (err, contents) {
-    const xmas = contents.split('\r\n').map(Number);
+    const xmas = contents.split('\n').map(Number);
     const invalidNumber = findInvalidNumber(xmas, 25);
     const contiguousSet = findContiguousSet(xmas, invalidNumber);
     const encryptionWeakness = Math.max(...contiguousSet) + Math.min(...contiguousSet);

@@ -24,7 +24,7 @@ const checkSlopes = (map) => {
 };
 
 fs.readFile('Day03/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n');
+    const puzzle_input = contents.split('\n');
 
     console.log('Part 1:', countTrees(puzzle_input, { right: 3, down: 1 }));
     console.log('Part 2:', checkSlopes(puzzle_input));

@@ -59,7 +59,7 @@ const countBags = (bag) => {
 };
 
 fs.readFile('Day07/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n');
+    const puzzle_input = contents.split('\n');
     const treeOfBags = processInput(puzzle_input);
 
     const count = treeOfBags.children.reduce(

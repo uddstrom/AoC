@@ -57,7 +57,7 @@ function* Computer(instructions) {
 }
 
 fs.readFile('Day08/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n');
+    const puzzle_input = contents.split('\n');
 
     const computer = Computer(puzzle_input);
     let output = computer.next();

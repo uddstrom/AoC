@@ -18,7 +18,7 @@ const countValidPasswords2 = (passwords) => {
 };
 
 fs.readFile('Day02/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n').map((row) => {
+    const puzzle_input = contents.split('\n').map((row) => {
         return {
             min: Number(row.split(' ')[0].split('-')[0]),
             max: Number(row.split(' ')[0].split('-')[1]),

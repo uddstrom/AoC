@@ -25,7 +25,7 @@ const findSeat = (seatIDs) => {
 };
 
 fs.readFile('Day05/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = contents.split('\r\n');
+    const puzzle_input = contents.split('\n');
     const seatIDs = puzzle_input.map(getBoardingpass).map(getSeatID);
 
     console.log('Part 1:', Math.max(...seatIDs));

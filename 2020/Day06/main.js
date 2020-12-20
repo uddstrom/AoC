@@ -24,7 +24,7 @@ const getGroups = (input) => {
 };
 
 fs.readFile('Day06/puzzle_input', 'utf8', function (err, contents) {
-    const puzzle_input = [...contents.split('\r\n'), ''];
+    const puzzle_input = [...contents.split('\n'), ''];
 
     const unionSum = getGroups(puzzle_input)
         .map(getUnionCount)

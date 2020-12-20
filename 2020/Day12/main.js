@@ -10,24 +10,19 @@ class Vec2 {
         return Math.atan2(this.E, this.N) * 180 / Math.PI;
     }
 
-    get length() {
-        return Math.sqrt(this.N * this.N + this.E * this.E);
-    }
-
-    rotate(deg = 0) {
-        this.setDir(this.dir + deg);
-        return this;
-    }
-
-    setDir(deg) {
+    set dir(deg) {
         const l = this.length;
         this.N = Math.round(l * Math.cos(deg / 360 * Math.PI * 2));
         this.E = Math.round(l * Math.sin(deg / 360 * Math.PI * 2));
     };
 
-    scale(f) {
-        this.N *= f;
-        this.E *= f;
+    get length() {
+        return Math.sqrt(this.N * this.N + this.E * this.E);
+    }
+
+    add(v) {
+        this.N += v.N;
+        this.E += v.E;
         return this;
     };
 
@@ -35,9 +30,14 @@ class Vec2 {
         return new Vec2(this.N, this.E);
     }
 
-    add(v) {
-        this.N += v.N;
-        this.E += v.E;
+    rotate(deg = 0) {
+        this.dir += deg;
+        return this;
+    }
+
+    scale(f) {
+        this.N *= f;
+        this.E *= f;
         return this;
     };
 };
@@ -63,15 +63,15 @@ const actions2 = {
 }
 
 const partOne = (instructions) => {
-    const ship = new Vec2(0, 0);
+    const ship = new Vec2();
     const dir = new Vec2(0, 1);
     instructions.forEach((instruction) => actions1[instruction.action](ship, dir, instruction.value));
     return Math.abs(ship.N) + Math.abs(ship.E);
 };
 
 const partTwo = (instructions) => {
+    const ship = new Vec2();
     const wp = new Vec2(1, 10);
-    const ship = new Vec2(0, 0);
     instructions.forEach((instruction) => actions2[instruction.action](ship, wp, instruction.value));
     return Math.abs(ship.N) + Math.abs(ship.E);
 };

@@ -1,5 +1,4 @@
 const fs = require('fs');
-const { prependOnceListener } = require('process');
 
 class Vec2 {
     constructor(N, E) {
@@ -8,8 +7,7 @@ class Vec2 {
     }
 
     get dir() {
-        const deg = Math.atan2(this.E, this.N) * 180 / Math.PI;
-        return (deg < 0) ? deg + 360 : deg;
+        return Math.atan2(this.E, this.N) * 180 / Math.PI;
     }
 
     get length() {

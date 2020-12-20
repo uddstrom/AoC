@@ -1,14 +1,19 @@
 const fs = require('fs');
+const { prependOnceListener } = require('process');
 
 class Vec2 {
-    constructor(x, y) {
-        this.x = x || 0;
-        this.y = y || 0;
+    constructor(N, E) {
+        this.N = N || 0;
+        this.E = E || 0;
     }
 
     get dir() {
-        const deg = Math.atan2(this.y, this.x) * 180 / Math.PI;
+        const deg = Math.atan2(this.E, this.N) * 180 / Math.PI;
         return (deg < 0) ? deg + 360 : deg;
+    }
+
+    get length() {
+        return Math.sqrt(this.N * this.N + this.E * this.E);
     }
 
     rotate(deg = 0) {
@@ -16,49 +21,61 @@ class Vec2 {
         return this;
     }
 
-    setDir(angle, dist = 1) {
-        this.x = dist * Math.cos(angle / 360 * Math.PI * 2);
-        this.y = dist * Math.sin(angle / 360 * Math.PI * 2);
+    setDir(deg) {
+        const l = this.length;
+        this.N = Math.round(l * Math.cos(deg / 360 * Math.PI * 2));
+        this.E = Math.round(l * Math.sin(deg / 360 * Math.PI * 2));
     };
 
     scale(f) {
-        this.x *= f;
-        this.y *= f;
+        this.N *= f;
+        this.E *= f;
+        return this;
     };
 
     clone() {
-        return new Vec2(this.x, this.y);
+        return new Vec2(this.N, this.E);
     }
+
+    add(v) {
+        this.N += v.N;
+        this.E += v.E;
+        return this;
+    };
 };
 
-const actions = {
-    N: (pos, val) => { return { ...pos, N: pos.N + val }},
-    S: (pos, val) => { return { ...pos, N: pos.N - val }},
-    E: (pos, val) => { return { ...pos, E: pos.E + val }},
-    W: (pos, val) => { return { ...pos, E: pos.E - val }},
-    L: (pos, val) => { return { ...pos, direction: pos.direction.rotate(-val) }},
-    R: (pos, val) => { return { ...pos, direction: pos.direction.rotate(val) }},
-    F: (pos, val) => {
-        // console.log('executing F', pos, val);
-        const dir = pos.direction.clone();
-        dir.scale(val);
-        return {
-            ...pos,
-            N: pos.N + dir.x,
-            E: pos.E + dir.y,
-        }
-    },
+const actions1 = {
+    N: (ship, _, val) => ship.N += val,
+    S: (ship, _, val) => ship.N -= val,
+    E: (ship, _, val) => ship.E += val,
+    W: (ship, _, val) => ship.E -= val,
+    L: (_, dir, val) => dir.rotate(-val),
+    R: (_, dir, val) => dir.rotate(val),
+    F: (ship, dir, val) => ship.add(dir.clone().scale(val)),
 }
 
-const process = (instructions) => {
-    const start = { N: 0, E: 0, direction: new Vec2(0, 1) };
-    const end = instructions.reduce((pos, instruction) => {
-        const newPos = actions[instruction.action](pos, instruction.value);
-        // console.log(newPos);
-        return newPos;
-    }, start);
-    console.log(end);
-    return Math.abs(end.N) + Math.abs(end.E);
+const actions2 = {
+    N: (_, wp, val) => wp.N += val,
+    S: (_, wp, val) => wp.N -= val,
+    E: (_, wp, val) => wp.E += val,
+    W: (_, wp, val) => wp.E -= val,
+    L: (_, wp, val) => wp.rotate(-val),
+    R: (_, wp, val) => wp.rotate(val),
+    F: (ship, wp, val) => ship.add(wp.clone().scale(val)),
+}
+
+const partOne = (instructions) => {
+    const ship = new Vec2(0, 0);
+    const dir = new Vec2(0, 1);
+    instructions.forEach((instruction) => actions1[instruction.action](ship, dir, instruction.value));
+    return Math.abs(ship.N) + Math.abs(ship.E);
+};
+
+const partTwo = (instructions) => {
+    const wp = new Vec2(1, 10);
+    const ship = new Vec2(0, 0);
+    instructions.forEach((instruction) => actions2[instruction.action](ship, wp, instruction.value));
+    return Math.abs(ship.N) + Math.abs(ship.E);
 };
 
 fs.readFile('Day12/puzzle_input', 'utf8', function (err, contents) {
@@ -68,7 +85,6 @@ fs.readFile('Day12/puzzle_input', 'utf8', function (err, contents) {
             value: Number(instr.substring(1)),
         }
     });
-    const dist = process(input);
-    console.log('Part 1:', dist);
-    console.log('Part 2:');
+    console.log('Part 1:', partOne(input));
+    console.log('Part 2:', partTwo(input));
 });

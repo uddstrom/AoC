@@ -82,6 +82,5 @@ fs.readFile('Day17/puzzle_input', 'utf8', function (err, contents) {
     let map2 = new Map();
     input.forEach((ydim, y) => ydim.forEach((xdim, x) => { if (xdim === '#') map2.set(`${0},${y},${x},${0}`, '#') }));
     range(0, 5).forEach(i => map2 = cycle2(map2, -1 - i, input.length + i));
-
     console.log('Part 2:', map2.size);
 });

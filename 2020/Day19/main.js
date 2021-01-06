@@ -1,0 +1,84 @@
+const fs = require('fs');
+
+const Node = (value) => ({
+    value: value,
+    left: null,
+    right: null,
+});
+
+function leafs(tree) {
+    function getLeafs(t) {
+        if (t.left === null) {
+            return t.value;
+        } else {
+            const left = getLeafs(t.left);
+            const right = t.right !== null ? getLeafs(t.right) : null;
+            return right ? [left, right] : [left];
+        }
+    }
+    return getLeafs(tree).flat(Infinity);
+}
+
+function countValidMessages(messages, rules) {
+    const developRule = (rule, developed) => {
+        const root = Node(developed ? developed + rule : rule);
+        const [head, ...tail] = rule.split(' ');
+        const subrules = rules.get(head)?.split('|').map(r => r.trim());
+        if (subrules) {
+            root.left = developRule(`${subrules[0]} ${tail.join(' ')}`.trim(), developed);
+            root.right = subrules[1] ? developRule(`${subrules[1]} ${tail.join(' ')}`.trim(), developed) : null;
+        } else if (tail.length > 0) {
+            root.left = developRule(tail.join(' '), developed ? developed + head : head);
+        }
+        return root;
+    }
+
+    const tree42 = developRule('42');
+    const tree31 = developRule('31');
+    const valid42 = leafs(tree42);
+    const valid31 = leafs(tree31);
+
+    function validateMessage(message) {
+        let isValid = true;
+        let rest31 = false;
+        const bytes = message.match(/.{8}/g);
+        const n = bytes.length - Math.ceil(bytes.length / 2 - 1); // min number of 42
+        for (let i = 0; i < bytes.length; i++) {
+            if (i < n && !valid42.includes(bytes[i])) {
+                isValid = false;
+            }
+            if (i >= n && valid31.includes(bytes[i])) {
+                rest31 = true;
+            } else {
+                if (rest31) isValid = false;
+                if (!valid42.includes(bytes[i])) isValid = false;
+            }
+
+            if (i === bytes.length - 1 && !(valid31.includes(bytes[i]))) {
+                // last byte must be valid in 31
+                isValid = false;
+            }
+        }
+        return isValid;
+    }
+
+
+    return messages.reduce((cnt, mess) => validateMessage(mess) ? cnt + 1 : cnt, 0);
+}
+
+function parseInput(input) {
+    const rules = new Map();
+    input.slice(0, input.indexOf('')).forEach(r => {
+        const key = r.substring(0, r.indexOf(':'));
+        const value = r.substring(r.indexOf(':') + 2).replaceAll('"', '');
+        rules.set(key, value);
+    });
+    const messages = input.slice(input.indexOf('') + 1);
+    return [rules, messages];
+}
+
+fs.readFile('Day19/puzzle_input', 'utf8', function (err, contents) {
+    const [rules, messages] = parseInput(contents.split('\n'));
+    console.log('Part 1:', countValidMessages(messages.filter(m => m.length === 24), rules));
+    console.log('Part 2:', countValidMessages(messages, rules));
+});

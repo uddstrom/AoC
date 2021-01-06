@@ -39,29 +39,23 @@ function countValidMessages(messages, rules) {
     const valid31 = leafs(tree31);
 
     function validateMessage(message) {
-        let isValid = true;
         let rest31 = false;
         const bytes = message.match(/.{8}/g);
-        const n = bytes.length - Math.ceil(bytes.length / 2 - 1); // min number of 42
-        for (let i = 0; i < bytes.length; i++) {
-            if (i < n && !valid42.includes(bytes[i])) {
-                isValid = false;
+        const n = bytes.length - Math.ceil(bytes.length / 2 - 1);
+        for (const [idx, byte] of bytes.entries()) {
+            const in31 = valid31.includes(byte);
+            const in42 = valid42.includes(byte);
+            // First n bytes must be valid in 42
+            if (idx < n && !in42) return false;
+            // Last byte must be valid in 31
+            if (idx === bytes.length - 1 && !in31) return false;
+            if (idx >= n && in31) {
+                rest31 = true; // The rest of the bytes must now be valid in 31
             }
-            if (i >= n && valid31.includes(bytes[i])) {
-                rest31 = true;
-            } else {
-                if (rest31) isValid = false;
-                if (!valid42.includes(bytes[i])) isValid = false;
-            }
-
-            if (i === bytes.length - 1 && !(valid31.includes(bytes[i]))) {
-                // last byte must be valid in 31
-                isValid = false;
-            }
+            else if (!in42 || rest31) return false;
         }
-        return isValid;
+        return true;
     }
-
 
     return messages.reduce((cnt, mess) => validateMessage(mess) ? cnt + 1 : cnt, 0);
 }

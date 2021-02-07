@@ -1,73 +1,50 @@
 const fs = require('fs');
-
-const Tile = (id) => ({
-    id,
-    data: [],
-});
-
-const setBoarderValues = (tile) => {
-    const toDecimals = (binaryString) => [
-        parseInt(binaryString, 2),
-        parseInt(binaryString.split('').reverse().join(''), 2),
-    ];
-
-    const [top, topFlipped] = toDecimals(tile.data[0]);
-    const [bottomFlipped, bottom] = toDecimals(tile.data[9]);
-    const [leftFlipped, left] = toDecimals(tile.data.map(d => d.charAt(0)).join(''));
-    const [right, rightFlipped] = toDecimals(tile.data.map(d => d.charAt(9)).join(''));
-    tile.borders = [top, bottom, left, right];
-    tile.bordersFlipped = [topFlipped, bottomFlipped, leftFlipped, rightFlipped];
-};
-
-const getTiles = (data) => {
-    const tiles = [];
-    let tile, counter = 0;
-    data.split('\n').forEach(line => {
-        if (line.startsWith('Tile')) {
-            tile = Tile(+line.substring(line.indexOf(' '), line.indexOf(':')));
-            counter = 0;
-        } else if (counter < 10) {
-            tile.data.push(line.replaceAll('.', 0).replaceAll('#', 1));
-            counter++;
-        } else {
-            tiles.push(tile);
-        }
-    });
-    tiles.forEach(tile => setBoarderValues(tile));
-    return tiles;
-};
+const { Tile } = require('./Tile');
+const { parseTiles } = require('./parse');
 
 const findCorners = (tiles) => {
     return tiles.filter(tile => {
         const findMatchingTile = (boarder) => {
             return tiles
                 .filter(t => t.id !== tile.id)
-                .find(t => t.borders.includes(boarder) || t.bordersFlipped.includes(boarder));
+                .find(t => t.bordersA.includes(boarder) || t.bordersB.includes(boarder));
         };
-        const matches = tile.borders.map((border) => findMatchingTile(border)).filter(m => m !== undefined);
-        const matchesFlipped = tile.bordersFlipped.map((boarder) => findMatchingTile(boarder)).filter(m => m !== undefined);
-        return matches.length < 3 && matchesFlipped.length < 3;
+        const matchesA = tile.bordersA.map((border) => findMatchingTile(border)).filter(m => m !== undefined);
+        const matchesB = tile.bordersB.map((boarder) => findMatchingTile(boarder)).filter(m => m !== undefined);
+        return matchesA.length < 3 && matchesB.length < 3;
     }).map(tile => tile.id);
 };
 
-const matchTiles = (tiles) => {
-    tiles.forEach(tile => {
-        console.log(tile);
-        const findMatchingTile = (boarder) => {
-            return tiles
-                .filter(t => t.id !== tile.id)
-                .find(t => t.borders.includes(boarder) || t.bordersFlipped.includes(boarder));
-        };
-        tile.top = findMatchingTile(tile.borders[0]) || findMatchingTile(tile.bordersFlipped[0]);
-        tile.bottom = findMatchingTile(tile.borders[1]) || findMatchingTile(tile.bordersFlipped[1]);
-        tile.left = findMatchingTile(tile.borders[2]) || findMatchingTile(tile.bordersFlipped[2]);
-        tile.right = findMatchingTile(tile.borders[3]) || findMatchingTile(tile.bordersFlipped[3]);
-    });
-};
+// const matchTiles = (tiles) => {
+//     tiles.forEach(tile => {
+//         const findMatchingTile = (boarder) => {
+//             return tiles
+//                 .filter(t => t.id !== tile.id)
+//                 .find(t => t.bordersA.includes(boarder) || t.bordersB.includes(boarder))?.id;
+//         };
+//         tile.topA = findMatchingTile(tile.bordersA[0]);
+//         tile.topB = findMatchingTile(tile.bordersB[0]);
+//         tile.rightA = findMatchingTile(tile.bordersA[1]);
+//         tile.rightB = findMatchingTile(tile.bordersB[1]);
+//         tile.bottomA = findMatchingTile(tile.bordersA[2]);
+//         tile.bottomB = findMatchingTile(tile.bordersB[2]);
+//         tile.leftA = findMatchingTile(tile.bordersA[3]);
+//         tile.leftB = findMatchingTile(tile.bordersB[3]);
+//     });
+// };
+
+const printPuzzle = (puzzle) => {
+    // puzzle.forEach(row => console.log(row.map(tile => tile.id)));
+    puzzle.forEach(row => console.log(row));
+}
+
+
 
 fs.readFile('Day20/input', 'utf8', function (err, contents) {
-    const tiles = getTiles(contents);
+    const tiles = parseTiles(contents);
+
     console.log('Part 1:', findCorners(tiles).reduce((acc, id) => acc * id));
+
 
     /*
     Find the tile order
@@ -77,8 +54,15 @@ fs.readFile('Day20/input', 'utf8', function (err, contents) {
     */
 
     // Find the tile order
-    matchTiles(tiles);
+    // matchTiles(tiles);
+    // console.log(tiles.filter(t => t.id === 1951));
 
+    // const puzzle = [[], [], []];
 
-    console.log(tiles);
+    // puzzle[0][0] = tiles.find(t => isTopLeft(t));
+    // puzzle[0][1] = tiles.find(t => t.id === puzzle[0][0].rightA);
+    // puzzle[0][2] = tiles.find(t => t.id === puzzle[0][1].rightA);
+
+    // printPuzzle(puzzle);
+
 });

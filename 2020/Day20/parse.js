@@ -14,6 +14,7 @@ const parseTiles = (input) => {
             tiles.push(tile);
         }
     });
+    tiles.forEach(tile => tile.setBorders());
     tiles.forEach(tile => tile.calculateBorderValues());
     return tiles;
 };

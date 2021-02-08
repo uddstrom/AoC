@@ -18,7 +18,7 @@ const assembleImage = (puzzleConfig, tiles) => {
     return image;
 };
 
-fs.readFile('Day20/input', 'utf8', function (err, contents) {
+fs.readFile('Day20/test', 'utf8', function (err, contents) {
     const tiles = parseTiles(contents);
     matchTiles(tiles);
 

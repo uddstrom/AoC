@@ -97,6 +97,14 @@ class Tile {
         return this.matchesA.filter(m => m !== undefined).length === 4
             || this.matchesB.filter(m => m !== undefined).length === 4;
     }
+
+    noBorders() {
+        const withoutBorders = [];
+        for (let row = 1; row < 9; row++) {
+            withoutBorders.push(this.data[row].substring(1, 9));
+        }
+        return withoutBorders;
+    }
 }
 
 const toDecimals = (binaryString) => [

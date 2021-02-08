@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { parseTiles } = require('./parse');
+const { getPuzzleConfig } = require('./puzzleConfig');
 
 const findCorners = (tiles) => {
     return tiles.filter(tile => {
@@ -44,141 +45,50 @@ const matchTiles = (tiles) => {
     tiles.forEach(tile => matchTile(tile, tiles));
 };
 
-const printPuzzle = (puzzle) => {
-    puzzle.forEach(row => console.log(row.map(tile => tile?.id)));
-    // puzzle.forEach(row => console.log(row));
-}
+const printPuzzleConfig = (config) => {
+    console.log('-- Puzzle config -----------------------------');
+    config.forEach(row => console.log(row.map(tile => tile?.id)));
+    console.log('----------------------------------------------');
+};
 
-const mirror = (n) => {
-    const binaryString = n.toString(2).padStart(10, '0');
-    const mirrorNum = parseInt(binaryString.split('').reverse().join(''), 2);
-    return mirrorNum;
-}
+const printImage = (image) => {
+    console.log('-- Image -------------------------------------');
+    image.forEach(row => console.log(row));
+    console.log('----------------------------------------------');
+};
+
+
+const assembleImage = (puzzleConfig, tiles) => {
+    const tileSize = 8;
+    const puzzleData = puzzleConfig.map(row => row.map(tile => tiles.find(t => t.id === tile.id).noBorders())); //row.map(pId => tiles.find(t => t.id === pId).noBorders()));
+    const image = [];
+
+    puzzleData.forEach(puzzleRow => {
+        for (tileRow = 0; tileRow < tileSize; tileRow++) {
+            image.push(puzzleRow.map(puzzleTile => puzzleTile[tileRow]).join(''));
+        }
+    })
+
+    return image;
+};
 
 fs.readFile('Day20/input', 'utf8', function (err, contents) {
     const tiles = parseTiles(contents);
+    matchTiles(tiles);
 
     console.log('Part 1:', findCorners(tiles).reduce((acc, id) => acc * id));
 
-
     /*
-    Find the tile order
-    Remove the borders
+    Find the tile order (puzzleConfig)
+    Put together the image
     Search for sea monsters
     Count # not part of the sea monster
     */
 
-    // Find the tile order
-    matchTiles(tiles);
-    // console.log(tiles);
-    // console.log(tiles.find(t => t.id === 3079));
-    // console.log(tiles.find(t => t.id === 2729).isEdge());
-
-    const findMatchingTile = (border, excludes) => {
-        return tiles
-            .filter(t => !excludes.includes(t.id))
-            .find(t => t.bordersA.includes(border) || t.bordersB.includes(border));
-    };
-
-    const puzzleSize = Math.sqrt(tiles.length);
-    const puzzle = Array(puzzleSize).fill().map(() => Array(puzzleSize).fill(undefined));
-    const tilesInUse = []
-
-    const matchLeft = (r, c) => {
-        // console.log('match left', r, c);
-        // match with right edge of tile to the left
-        const borderToMatch = mirror(puzzle[r][c - 1].borders[1]);
-        // console.log('Looking for match to border', borderToMatch);
-        const matchingTile = findMatchingTile(borderToMatch, tilesInUse.map(p => p.id));
-        // rotate/flip matching tile so matching border is to the left
-        let rotates = 0;
-        while (matchingTile.borders[3] !== mirror(borderToMatch)) {
-            if (rotates > 8) {
-                throw Error("Tiles not matching");
-            }
-            if (rotates === 4) {
-                // back at start, need to flip
-                matchingTile.flip();
-            } else {
-                matchingTile.rotate();
-            }
-            rotates++;
-        }
-        // console.log('Match found', matchingTile);
-        puzzle[r][c] = matchingTile;
-    }
-
-    const matchUp = (r, c) => {
-        // console.log('match up', r, c);
-        // match with bottom edge of tile above
-        const borderToMatch = puzzle[r - 1][c].borders[2];
-        // console.log('Looking for match to border', borderToMatch);
-        const matchingTile = findMatchingTile(borderToMatch, tilesInUse.map(p => p.id));
-        // rotate/flip matching tile so matching border is to the left
-        let rotates = 0;
-        while (matchingTile.borders[0] !== mirror(borderToMatch)) {
-            if (rotates > 8) {
-                throw Error("Tiles not matching");
-            }
-            if (rotates === 4) {
-                // back at start, need to flip
-                matchingTile.flip();
-            } else {
-                matchingTile.rotate();
-            }
-            rotates++;
-        }
-        // console.log('Match found', matchingTile);
-        puzzle[r][c] = matchingTile;
-    }
-
-    puzzle.map((row, r) => row.map((tile, c) => {
-        if (r === 0) {
-            // first row
-            if (c === 0) {
-                // first corner
-                let corner = tiles.find(t => t.isCorner());
-                let rotates = 0;
-                while (corner.matches[1] === undefined || corner.matches[2] === undefined) {
-                    if (rotates > 8) {
-                        throw Error("Tiles not matching");
-                    }
-                    if (rotates === 4) {
-                        // back at start, need to flip
-                        corner.flip();
-                    } else {
-                        corner.rotate();
-                    }
-                    rotates++;
-                }
-                // console.log('First corner', corner);
-                puzzle[r][c] = corner;
-            }
-
-            if (c > 0) {
-                // top edge
-                matchLeft(r, c);
-            }
-        }
-
-        if (r > 0) {
-            // second to last row
-            if (c === 0) {
-                // left edge, match up
-                matchUp(r, c);
-            }
-
-            if (c > 0) {
-                // top edge
-                matchLeft(r, c);
-            }
-        }
-
-        tilesInUse.push(puzzle[r][c]);
-    }));
-
-    printPuzzle(puzzle);
-
+    const config = getPuzzleConfig(tiles);
+    printPuzzleConfig(config);
+    const image = assembleImage(config, tiles);
+    printImage(image);
 });
 
 

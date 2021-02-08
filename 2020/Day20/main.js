@@ -2,40 +2,11 @@ const fs = require('fs');
 const { parseTiles } = require('./parse');
 const { getPuzzleConfig } = require('./puzzleConfig');
 const { printImage, printPuzzleConfig } = require('./printing');
-
-const matchTile = (tile, tiles) => {
-    const findMatchingTile = (border) => {
-        return tiles
-            .filter(t => t.id !== tile.id)
-            .find(t => t.bordersA.includes(border) || t.bordersB.includes(border))?.id;
-    };
-
-    tile.matchesA = [
-        findMatchingTile(tile.bordersA[0]),
-        findMatchingTile(tile.bordersA[1]),
-        findMatchingTile(tile.bordersA[2]),
-        findMatchingTile(tile.bordersA[3]),
-    ];
-
-    tile.matchesB = [
-        findMatchingTile(tile.bordersB[0]),
-        findMatchingTile(tile.bordersB[1]),
-        findMatchingTile(tile.bordersB[2]),
-        findMatchingTile(tile.bordersB[3]),
-    ];
-
-    tile.matches = [...tile.matchesA];
-
-    return tile;
-};
-
-const matchTiles = (tiles) => {
-    tiles.forEach(tile => matchTile(tile, tiles));
-};
+const { matchTiles } = require('./tile');
 
 const assembleImage = (puzzleConfig, tiles) => {
     const tileSize = 8;
-    const puzzleData = puzzleConfig.map(row => row.map(tile => tiles.find(t => t.id === tile.id).noBorders())); //row.map(pId => tiles.find(t => t.id === pId).noBorders()));
+    const puzzleData = puzzleConfig.map(row => row.map(tile => tiles.find(t => t.id === tile.id).removeBorders()));
     const image = [];
 
     puzzleData.forEach(puzzleRow => {
@@ -65,7 +36,5 @@ fs.readFile('Day20/input', 'utf8', function (err, contents) {
     printPuzzleConfig(config);
     const image = assembleImage(config, tiles);
     printImage(image);
+
 });
-
-
-

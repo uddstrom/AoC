@@ -1,6 +1,40 @@
+const toDecimals = (binaryString) => [
+    parseInt(binaryString, 2),
+    parseInt(binaryString.split('').reverse().join(''), 2),
+];
+
+const matchTile = (tile, tiles) => {
+    const findMatchingTile = (border) => {
+        return tiles
+            .filter(t => t.id !== tile.id)
+            .find(t => t.bordersA.includes(border) || t.bordersB.includes(border))?.id;
+    };
+
+    tile.matchesA = [
+        findMatchingTile(tile.bordersA[0]),
+        findMatchingTile(tile.bordersA[1]),
+        findMatchingTile(tile.bordersA[2]),
+        findMatchingTile(tile.bordersA[3]),
+    ];
+
+    tile.matchesB = [
+        findMatchingTile(tile.bordersB[0]),
+        findMatchingTile(tile.bordersB[1]),
+        findMatchingTile(tile.bordersB[2]),
+        findMatchingTile(tile.bordersB[3]),
+    ];
+
+    tile.matches = [...tile.matchesA];
+
+    return tile;
+};
+
+const matchTiles = (tiles) => {
+    tiles.forEach(tile => matchTile(tile, tiles));
+};
 
 class Tile {
-    constructor(id, data) {
+    constructor(id) {
         this.id = id;
         this.data = [];
         this.bordersA = []; // edge values unflipped
@@ -12,39 +46,29 @@ class Tile {
         this.borders = []; // edge values according to current flip/rotation setup.
         this.matches = [];
 
-        this.flipped = false;
         this.rotation = 0;
     }
 
-    calculateBorderValues() {
+    calculateInitialBorderValues() {
         const [topA, topB] = toDecimals(this.data[0]);
         const [bottomB, bottomA] = toDecimals(this.data[9]);
         const [leftB, leftA] = toDecimals(this.data.map(d => d.charAt(0)).join(''));
         const [rightA, rightB] = toDecimals(this.data.map(d => d.charAt(9)).join(''));
         this.bordersA = [topA, rightA, bottomA, leftA];
         this.bordersB = [topB, leftB, bottomB, rightB];
+        this.setBorders();
     }
 
     flip() {
         // along Y-axis -> reverse each row in data.
         this.data = this.data.map(row => row.split('').reverse().join(''));
-        this.flipped = !this.flipped;
-
-        switch (this.rotation) {
-            case 0:
-                this.matches = [this.matchesB[0], this.matchesB[1], this.matchesB[2], this.matchesB[3]];
-                break;
-            case 90:
-                this.matches = [this.matchesB[3], this.matchesB[0], this.matchesB[1], this.matchesB[2]];
-                break;
-            case 180:
-                this.matches = [this.matchesB[2], this.matchesB[3], this.matchesB[0], this.matchesB[1]];
-                break;
-            case 270:
-                this.matches = [this.matchesB[1], this.matchesB[2], this.matchesB[3], this.matchesB[0]];
-                break;
-        }
-
+        const r = this.rotation / 90;
+        this.matches = [
+            this.matchesB[r],
+            this.matchesB[(1 + r) % 4],
+            this.matchesB[(2 + r) % 4],
+            this.matchesB[(3 + r) % 4],
+        ];
         this.setBorders();
     }
 
@@ -55,9 +79,8 @@ class Tile {
         const rotated = reversed[0].map((_, idx) => reversed.map(row => row[idx]).join(''));
         this.data = rotated;
         this.matches = [this.matches[3], this.matches[0], this.matches[1], this.matches[2]];
-        this.setBorders();
-
         this.rotation = (this.rotation + 90) % 360;
+        this.setBorders();
     }
 
     setBorders() {
@@ -68,37 +91,12 @@ class Tile {
         this.borders = [top, right, bottom, left];
     }
 
-    setMatches(tiles) {
-        const findMatchingTile = (border) => {
-            return tiles
-                .filter(t => t.id !== tile.id)
-                .find(t => t.bordersA.includes(border) || t.bordersB.includes(border))?.id;
-        };
-
-        this.tile.matches = [
-            findMatchingTile(this.tile.bordersB[0]),
-            findMatchingTile(this.tile.bordersB[1]),
-            findMatchingTile(this.tile.bordersB[2]),
-            findMatchingTile(this.tile.bordersB[3]),
-        ];
-    }
-
     isCorner() {
         return this.matchesA.filter(m => m !== undefined).length === 2
             || this.matchesB.filter(m => m !== undefined).length === 2;
     }
 
-    isEdge() {
-        return this.matchesA.filter(m => m !== undefined).length === 3
-            || this.matchesB.filter(m => m !== undefined).length === 3;
-    }
-
-    isCenter() {
-        return this.matchesA.filter(m => m !== undefined).length === 4
-            || this.matchesB.filter(m => m !== undefined).length === 4;
-    }
-
-    noBorders() {
+    removeBorders() {
         const withoutBorders = [];
         for (let row = 1; row < 9; row++) {
             withoutBorders.push(this.data[row].substring(1, 9));
@@ -107,9 +105,4 @@ class Tile {
     }
 }
 
-const toDecimals = (binaryString) => [
-    parseInt(binaryString, 2),
-    parseInt(binaryString.split('').reverse().join(''), 2),
-];
-
-module.exports = { Tile };
+module.exports = { Tile, matchTiles };

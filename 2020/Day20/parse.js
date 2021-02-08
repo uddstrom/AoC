@@ -1,4 +1,4 @@
-const { Tile } = require('./Tile');
+const { Tile } = require('./tile');
 
 const parseTiles = (input) => {
     const tiles = [];
@@ -14,8 +14,7 @@ const parseTiles = (input) => {
             tiles.push(tile);
         }
     });
-    tiles.forEach(tile => tile.setBorders());
-    tiles.forEach(tile => tile.calculateBorderValues());
+    tiles.forEach(tile => tile.calculateInitialBorderValues());
     return tiles;
 };
 

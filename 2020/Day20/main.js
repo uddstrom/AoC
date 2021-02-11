@@ -1,24 +1,11 @@
 const fs = require('fs');
 const { parseTiles } = require('./parse');
 const { getPuzzleConfig } = require('./puzzleConfig');
-const { printImage, printPuzzleConfig } = require('./printing');
 const { matchTiles } = require('./tile');
+const { findSeaMonsters } = require('./seamonsters');
+const { assembleImage, Image } = require('./image');
 
-const assembleImage = (puzzleConfig, tiles) => {
-    const tileSize = 8;
-    const puzzleData = puzzleConfig.map(row => row.map(tile => tiles.find(t => t.id === tile.id).removeBorders()));
-    const image = [];
-
-    puzzleData.forEach(puzzleRow => {
-        for (tileRow = 0; tileRow < tileSize; tileRow++) {
-            image.push(puzzleRow.map(puzzleTile => puzzleTile[tileRow]).join(''));
-        }
-    })
-
-    return image;
-};
-
-fs.readFile('Day20/test', 'utf8', function (err, contents) {
+fs.readFile('Day20/puzzle_input', 'utf8', function (err, contents) {
     const tiles = parseTiles(contents);
     matchTiles(tiles);
 
@@ -33,8 +20,18 @@ fs.readFile('Day20/test', 'utf8', function (err, contents) {
     */
 
     const config = getPuzzleConfig(tiles);
-    printPuzzleConfig(config);
     const image = assembleImage(config, tiles);
-    printImage(image);
 
+    let monsterParts = new Set();
+    let rotates = 0;
+    while (rotates < 8) {
+        monsterParts = findSeaMonsters(image.data);
+        if (monsterParts.size > 0) break;
+        if (rotates === 3) image.flip();
+        else image.rotate();
+        rotates++;
+    }
+
+    image.print(monsterParts);
+    console.log('Part 2:', image.waterRoughness(monsterParts));
 });

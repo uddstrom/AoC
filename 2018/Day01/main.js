@@ -1,21 +1,23 @@
-const { getData } = require('../lib/utils');
 const PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
+const { getData } = require('../lib/utils');
+const { add, trampoline } = require('../lib/fn');
 
 const toNumbers = input => input.split('\n').map(Number);
-const applyChanges = input => toNumbers(input).reduce((acc, curr) => acc + curr);
+const applyChanges = input => toNumbers(input).reduce(add);
 
+// Recursive version with PTC. However, PTC not supported by 
+// V8, hence the use of trampolines (naive implementation).
 function calibrate(input) {
-    // how can loops and state be avoided in JS without TCO?
-    const visited = new Set();
-    let currentFrequency = 0;
-    let numbers;
-    while (!visited.has(currentFrequency)) {
-        visited.add(currentFrequency);
-        const [head, ...tail] = numbers?.length > 0 ? numbers : toNumbers(input);
-        currentFrequency += head;
-        numbers = tail;
-    }
-    return currentFrequency;
+    var trampolinedCalibrate = trampoline(
+        function cali(currentFrequency, numbers, visited) {
+            if (visited.has(currentFrequency)) return currentFrequency;
+            visited.add(currentFrequency);
+            const [head, ...tail] = numbers?.length > 0 ? numbers : toNumbers(input);
+            return function () {
+                return cali(currentFrequency + head, tail, visited);
+            }
+        });
+    return trampolinedCalibrate(0, toNumbers(input), new Set());
 }
 
 const data = getData(PUZZLE_INPUT_PATH);

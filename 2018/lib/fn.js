@@ -28,6 +28,12 @@ function eq(j) {
     return i => i === j;
 }
 
+function not(fn) {
+    return function inverted(...args) {
+        return !fn(...args);
+    }
+}
+
 function trampoline(fn) {
     return function trampolined(...args) {
         var result = fn(...args);
@@ -44,5 +50,6 @@ module.exports = {
     compose,
     count,
     eq,
+    not,
     trampoline
 };

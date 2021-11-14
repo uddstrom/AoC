@@ -1,0 +1,29 @@
+start = {
+    x,
+    y,
+    state
+}
+
+stack.push(start)
+while(stack.length > 0) {
+
+    tile = stack.shift()
+
+    createNode(tile.x, tile.y, state) // state = instance of the intcode machine
+
+    [NORTH, EAST, SOUTH, WEST].map(dir => {
+        copy the machine and go in each direction
+        droid = new Droid(tile.x, tile.y, tile.state)
+        feedback = droid.move(dir)
+        updateMap(feedback)
+
+        if (feedback === 0) // hit a wall
+
+        if (feedback === 1) // 
+            stack.unshift(new tile(x, y, state))
+        if (feedback === 2)
+            oxygen system found -> break;
+
+    });
+}
+

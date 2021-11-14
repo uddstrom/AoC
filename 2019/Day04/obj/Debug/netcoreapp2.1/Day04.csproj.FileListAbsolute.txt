@@ -1,0 +1,11 @@
+C:\Code\Local\AdventOfCode\2019\Day04\bin\Debug\netcoreapp2.1\Day04.deps.json
+C:\Code\Local\AdventOfCode\2019\Day04\bin\Debug\netcoreapp2.1\Day04.runtimeconfig.json
+C:\Code\Local\AdventOfCode\2019\Day04\bin\Debug\netcoreapp2.1\Day04.runtimeconfig.dev.json
+C:\Code\Local\AdventOfCode\2019\Day04\bin\Debug\netcoreapp2.1\Day04.dll
+C:\Code\Local\AdventOfCode\2019\Day04\bin\Debug\netcoreapp2.1\Day04.pdb
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.csprojAssemblyReference.cache
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.csproj.CoreCompileInputs.cache
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.AssemblyInfoInputs.cache
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.AssemblyInfo.cs
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.dll
+C:\Code\Local\AdventOfCode\2019\Day04\obj\Debug\netcoreapp2.1\Day04.pdb

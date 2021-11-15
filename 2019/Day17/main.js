@@ -1,3 +1,4 @@
+const { scryptSync } = require('crypto');
 const fs = require('fs');
 const PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
 const { IntcodeComputer } = require('./IntcodeComputer');
@@ -43,9 +44,29 @@ const printScaffolds = (map) => {
     map.forEach(line => console.log(`${line.join('')}`));
 }
 
+const isIntersection = (map, r, c) => {
+    var top = r > 0 ? map[r-1][c] : undefined;
+    var bottom = r < map.length -1 ? map[r+1][c] : undefined;
+    var left = c > 0 ? map[r][c-1] : undefined;
+    var right = c < map[r].length -1 ? map[r][c+1] : undefined;
+
+    return [top, bottom, left, right].reduce((acc, curr) => { return curr === '#' ? acc + 1 : acc }, 0) > 2;
+}
+
+const calculateSumOfAlignmentParams = (scaffoldMap) => {
+    return scaffoldMap.map((row, r) => {
+        return row.map((col, c) => {
+            if (col !== '#') return 0;
+            if (!isIntersection(scaffoldMap, r, c)) return 0;
+            return r * c;
+        });
+    }).flat().reduce((acc, curr) => acc + curr);
+}
+
 const main = async () => {
-    var map = generateMap(initAftScaffoldingControlAndInformationInterface());
-    printScaffolds(map);
+    var scaffoldMap = generateMap(initAftScaffoldingControlAndInformationInterface());
+    printScaffolds(scaffoldMap);
+    console.log('Part 1:', calculateSumOfAlignmentParams(scaffoldMap));
 };
 
 main();

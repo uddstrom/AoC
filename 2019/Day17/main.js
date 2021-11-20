@@ -1,9 +1,9 @@
-const fs = require('fs');
-const PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
-const { IntcodeComputer } = require('./IntcodeComputer2');
+var fs = require('fs');
+var PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
+var { IntcodeComputer } = require('./IntcodeComputer');
 
 function getData(path) {
-    const contents = fs.readFileSync(path, 'utf8');
+    var contents = fs.readFileSync(path, 'utf8');
     return function parseContent(parser) {
         return parser(contents);
     };
@@ -21,12 +21,11 @@ const initAftScaffoldingControlAndInformationInterface = () => {
 };
 
 const generateMap = (computer) => {
-    const output = [];
-    let terminateProgram = false;
-    // 35 means #, 46 means ., 10 starts a new line
+    var output = [];
+    var terminateProgram = false;
     while (!terminateProgram) {
-        const { value: out, done } = computer.next();
-        output.push(out);
+        var { value: out, done } = computer.next();
+        out && output.push(out);
         terminateProgram = done;
     }
     return output;
@@ -49,7 +48,18 @@ const isIntersection = (map, r, c) => {
     );
 };
 
-const calculateSumOfAlignmentParams = (scaffoldMap) => {
+const calculateSumOfAlignmentParams = (map) => {
+    const scaffoldMap = [];
+    let row = [];
+    map.map((chr) => String.fromCharCode(chr)).forEach((el) => {
+        if (el === '\n' && row.length > 0) {
+            scaffoldMap.push([...row]);
+            row = [];
+        } else {
+            row.push(el);
+        }
+    });
+
     return scaffoldMap
         .map((row, r) => {
             return row.map((col, c) => {
@@ -63,33 +73,30 @@ const calculateSumOfAlignmentParams = (scaffoldMap) => {
 };
 
 const notifyRobots = () => {
-    var mainRoutine = 'A,B,C,A\n';
-    var a = 'R,8\n';
-    var b = '2,L,1\n';
-    var c = 'L,6\n';
+    var mainRoutine = 'A,B,A,B,C,B,C,A,C,C\n';
+    var a = 'R,12,L,10,L,10\n';
+    var b = 'L,6,L,12,R,12,L,4\n';
+    var c = 'L,12,R,12,L,6\n';
     var video = 'n\n';
     var input = `${mainRoutine}${a}${b}${c}${video}`
         .split('')
         .map((chr) => chr.charCodeAt(0));
-    //console.log(input);
 
     var program = getData(PUZZLE_INPUT_PATH)(parser);
     program[0] = 2; // wake up robot
     var computer = IntcodeComputer(program, input);
-    // var computer = createProgramInstance(program, input);
-
     var map = generateMap(computer);
-    printScaffolds(map);
+    // printScaffolds(map);
+
+    return map[map.length - 1];
 };
 
 const main = async () => {
-    // var scaffoldMap = generateMap(
-    //     initAftScaffoldingControlAndInformationInterface(),
-    //     []
-    // );
-    // printScaffolds(scaffoldMap);
-    // console.log('Part 1:', calculateSumOfAlignmentParams(scaffoldMap));
-    notifyRobots();
+    var scaffoldMap = generateMap(
+        initAftScaffoldingControlAndInformationInterface()
+    );
+    console.log('Part 1:', calculateSumOfAlignmentParams(scaffoldMap));
+    console.log('Part 2:', notifyRobots());
 };
 
 main();

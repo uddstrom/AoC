@@ -11,34 +11,41 @@ class Instruction {
     }
 }
 
-function* IntcodeComputer(code, stack) {
-    const debug = false;
+function* IntcodeComputer(code, stack = []) {
     const program = [...code];
     const input = [...stack];
     let ip = 0;
     let rb = 0;
 
-    while (true) {
-        const i = new Instruction(program[ip]);
-        let in1, in2, output_address;
+    function* getInstructions() {
+        while (ip < program.length) {
+            yield new Instruction(program[ip]);
+        }
+    }
 
-        // const setInOutParams = () => {
+    function execute({ OPCODE, PARAM_MODES }) {
         /*  param modes:
-                0: position mode
-                1: immediate mode
-                2: relative mode
-            */
+            0: position mode
+            1: immediate mode
+            2: relative mode
+        */
         const pos1 =
-            i.PARAM_MODES[0] === 2 ? rb + program[ip + 1] : program[ip + 1];
+            PARAM_MODES[0] === 2 ? rb + program[ip + 1] : program[ip + 1];
         const pos2 =
-            i.PARAM_MODES[1] === 2 ? rb + program[ip + 2] : program[ip + 2];
-        in1 = i.PARAM_MODES[0] === 1 ? program[ip + 1] : program[pos1];
-        in2 = i.PARAM_MODES[1] === 1 ? program[ip + 2] : program[pos2];
-        output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 3];
-        // };
-        // setInOutParams();
+            PARAM_MODES[1] === 2 ? rb + program[ip + 2] : program[ip + 2];
+        let in1 = PARAM_MODES[0] === 1 ? program[ip + 1] : program[pos1];
+        let in2 = PARAM_MODES[1] === 1 ? program[ip + 2] : program[pos2];
+        const output_address =
+            (PARAM_MODES[2] === 2 ? rb : 0) + Number(program[ip + 3]);
 
-        switch (i.OPCODE) {
+        if (typeof in1 !== 'number') {
+            in1 = 0;
+        }
+        if (typeof in2 !== 'number') {
+            in2 = 0;
+        }
+
+        switch (OPCODE) {
             case 1:
                 // Add
                 program[output_address] = in1 + in2;
@@ -52,16 +59,15 @@ function* IntcodeComputer(code, stack) {
             case 3:
                 // Input
                 const inputVal = input.shift();
-                output_address =
-                    (i.PARAM_MODES[0] === 2 ? rb : 0) + program[ip + 1];
-                program[output_address] = Number(inputVal);
+                const out_address =
+                    (PARAM_MODES[0] === 2 ? rb : 0) + program[ip + 1];
+                program[out_address] = Number(inputVal);
                 ip += 2;
                 break;
             case 4:
                 // Output
-                yield in1;
                 ip += 2;
-                break;
+                return in1;
             case 5:
                 // Jump-if-true
                 ip = Number(in1 !== 0 ? in2 : ip + 3);
@@ -85,13 +91,16 @@ function* IntcodeComputer(code, stack) {
                 rb += Number(in1);
                 ip += 2;
                 break;
-            case 99:
-                return;
             default:
                 throw new Error('Unknown opCode: ', i.OPCODE);
         }
     }
+
+    for (const i of getInstructions()) {
+        if (i.OPCODE === 99) return;
+        const output = execute(i);
+        if (output !== undefined) yield output; // här skulle man kunna ta emot ny input och pusha på stacken.
+    }
 }
 
-//export default IntcodeComputer;
 module.exports = { IntcodeComputer };

@@ -11,36 +11,32 @@ class Instruction {
     }
 }
 
-function* IntcodeComputer(code) {
+function* IntcodeComputer(code, stack) {
+    const debug = false;
     const program = [...code];
+    const input = [...stack];
     let ip = 0;
     let rb = 0;
-    let input = yield 'ready';
-    
+
     while (true) {
         const i = new Instruction(program[ip]);
-
         let in1, in2, output_address;
 
-        const setInOutParams = () => {
-            /*  param modes:
+        // const setInOutParams = () => {
+        /*  param modes:
                 0: position mode
                 1: immediate mode
                 2: relative mode
             */
-            const pos1 =
-                i.PARAM_MODES[0] === 2
-                    ? rb + program[ip + 1]
-                    : program[ip + 1];
-            const pos2 =
-                i.PARAM_MODES[1] === 2
-                    ? rb + program[ip + 2]
-                    : program[ip + 2];
-            in1 = i.PARAM_MODES[0] === 1 ? program[ip + 1] : program[pos1];
-            in2 = i.PARAM_MODES[1] === 1 ? program[ip + 2] : program[pos2];
-            output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 3];
-        };
-        setInOutParams();
+        const pos1 =
+            i.PARAM_MODES[0] === 2 ? rb + program[ip + 1] : program[ip + 1];
+        const pos2 =
+            i.PARAM_MODES[1] === 2 ? rb + program[ip + 2] : program[ip + 2];
+        in1 = i.PARAM_MODES[0] === 1 ? program[ip + 1] : program[pos1];
+        in2 = i.PARAM_MODES[1] === 1 ? program[ip + 2] : program[pos2];
+        output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 3];
+        // };
+        // setInOutParams();
 
         switch (i.OPCODE) {
             case 1:
@@ -55,22 +51,24 @@ function* IntcodeComputer(code) {
                 break;
             case 3:
                 // Input
-                output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 1];
-                program[output_address] = input;
+                const inputVal = input.shift();
+                output_address =
+                    (i.PARAM_MODES[0] === 2 ? rb : 0) + program[ip + 1];
+                program[output_address] = Number(inputVal);
                 ip += 2;
                 break;
             case 4:
                 // Output
+                yield in1;
                 ip += 2;
-                input = yield in1;
                 break;
             case 5:
                 // Jump-if-true
-                ip = in1 !== 0 ? in2 : ip + 3;
+                ip = Number(in1 !== 0 ? in2 : ip + 3);
                 break;
             case 6:
                 // Jump-if-false
-                ip = in1 === 0 ? in2 : ip + 3;
+                ip = Number(in1 === 0 ? in2 : ip + 3);
                 break;
             case 7:
                 // Less than
@@ -79,12 +77,12 @@ function* IntcodeComputer(code) {
                 break;
             case 8:
                 // Equals
-                program[output_address] = in1 == in2 ? 1 : 0;
+                program[output_address] = in1 === in2 ? 1 : 0;
                 ip += 4;
                 break;
             case 9:
                 // Adjust relative base
-                rb += in1;
+                rb += Number(in1);
                 ip += 2;
                 break;
             case 99:

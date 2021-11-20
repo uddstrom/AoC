@@ -1,6 +1,6 @@
 const fs = require('fs');
 const PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
-const { IntcodeComputer } = require('./IntcodeComputer');
+const { IntcodeComputer } = require('./IntcodeComputer2');
 
 function getData(path) {
     const contents = fs.readFileSync(path, 'utf8');
@@ -76,7 +76,7 @@ const notifyRobots = () => {
     var program = getData(PUZZLE_INPUT_PATH)(parser);
     program[0] = 2; // wake up robot
     var computer = IntcodeComputer(program, input);
-    //var computer = createProgramInstance(program, input);
+    // var computer = createProgramInstance(program, input);
 
     var map = generateMap(computer);
     printScaffolds(map);

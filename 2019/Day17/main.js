@@ -1,13 +1,6 @@
-var fs = require('fs');
-var PUZZLE_INPUT_PATH = `${__dirname}/puzzle_input`;
-var { IntcodeComputer } = require('./IntcodeComputer');
-
-function getData(path) {
-    var contents = fs.readFileSync(path, 'utf8');
-    return function parseContent(parser) {
-        return parser(contents);
-    };
-}
+import IntcodeComputer from '../lib/IntcodeComputer.js';
+import { getData, getPath } from '../lib/utils.js';
+const PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
 var parser = (input) => {
     return input.split(',').map(Number);

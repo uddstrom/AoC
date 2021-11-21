@@ -13,7 +13,7 @@ class Instruction {
 
 function* IntcodeComputer(code, stack = []) {
     const program = [...code];
-    const input = [...stack];
+    const _stack = [...stack];
     let ip = 0;
     let rb = 0;
 
@@ -58,7 +58,7 @@ function* IntcodeComputer(code, stack = []) {
                 break;
             case 3:
                 // Input
-                const inputVal = input.shift();
+                const inputVal = _stack.shift();
                 const out_address =
                     (PARAM_MODES[0] === 2 ? rb : 0) + program[ip + 1];
                 program[out_address] = Number(inputVal);
@@ -99,8 +99,11 @@ function* IntcodeComputer(code, stack = []) {
     for (const i of getInstructions()) {
         if (i.OPCODE === 99) return;
         const output = execute(i);
-        if (output !== undefined) yield output; // här skulle man kunna ta emot ny input och pusha på stacken.
+        if (output) {
+            const input = yield output;
+            if (typeof input === 'number') _stack.push(input);
+        }
     }
 }
 
-module.exports = { IntcodeComputer };
+export default IntcodeComputer;

@@ -1,11 +1,10 @@
-import IntcodeComputer from './IntcodeComputer.js';
+import IntcodeComputer from '../lib/IntcodeComputer.js';
 
 export class Droid {
     constructor(x, y, code) {
         this.x = x;
         this.y = y;
-        this.computer = IntcodeComputer(code);
-        this.computer.next();
+        this.computer = IntcodeComputer(code, [1]);
     }
 
     move(dir) {

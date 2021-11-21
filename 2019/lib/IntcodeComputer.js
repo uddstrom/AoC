@@ -99,7 +99,7 @@ function* IntcodeComputer(code, stack = []) {
     for (const i of getInstructions()) {
         if (i.OPCODE === 99) return;
         const output = execute(i);
-        if (output) {
+        if (output !== undefined) {
             const input = yield output;
             if (typeof input === 'number') _stack.push(input);
         }

@@ -16,10 +16,10 @@ function* IntcodeComputer(code) {
     let ip = 0;
     let rb = 0;
     let input = yield 'ready';
-    
+
     while (true) {
         const i = new Instruction(program[ip]);
-
+        // console.log(i);
         let in1, in2, output_address;
 
         const setInOutParams = () => {
@@ -29,16 +29,13 @@ function* IntcodeComputer(code) {
                 2: relative mode
             */
             const pos1 =
-                i.PARAM_MODES[0] === 2
-                    ? rb + program[ip + 1]
-                    : program[ip + 1];
+                i.PARAM_MODES[0] === 2 ? rb + program[ip + 1] : program[ip + 1];
             const pos2 =
-                i.PARAM_MODES[1] === 2
-                    ? rb + program[ip + 2]
-                    : program[ip + 2];
+                i.PARAM_MODES[1] === 2 ? rb + program[ip + 2] : program[ip + 2];
             in1 = i.PARAM_MODES[0] === 1 ? program[ip + 1] : program[pos1];
             in2 = i.PARAM_MODES[1] === 1 ? program[ip + 2] : program[pos2];
-            output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 3];
+            output_address =
+                (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 3];
         };
         setInOutParams();
 
@@ -55,7 +52,10 @@ function* IntcodeComputer(code) {
                 break;
             case 3:
                 // Input
-                output_address = (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 1];
+                console.log('Input', input);
+                // debugger;
+                output_address =
+                    (i.PARAM_MODES[2] === 2 ? rb : 0) + program[ip + 1];
                 program[output_address] = input;
                 ip += 2;
                 break;
@@ -63,6 +63,7 @@ function* IntcodeComputer(code) {
                 // Output
                 ip += 2;
                 input = yield in1;
+                // console.log('Output - input set to:', input);
                 break;
             case 5:
                 // Jump-if-true

@@ -1,4 +1,4 @@
-import IntcodeComputer from './IntcodeComputer.js';
+import IntcodeComputer from '../lib/IntcodeComputer.js';
 import Timer from './Timer.js';
 
 const readPuzzleInput = (file) => {
@@ -25,7 +25,7 @@ const TILE_ID = {
 
 const game = (code) => {
     code[0] = 2; // Play for free!
-    const computer = IntcodeComputer(code);
+    const computer = IntcodeComputer(code, false);
     let x, y, tileId, done;
     let blockCount = 0;
     let score = 0;
@@ -33,7 +33,6 @@ const game = (code) => {
     let ball = { x: 0, y: 0 };
     let paddleX = 0;
     const gameEvents = [];
-    computer.next();
     while (true) {
         ({ value: x } = computer.next(joystick));
         ({ value: y } = computer.next(joystick));
@@ -130,7 +129,12 @@ const drawBall = (x, y, ctx) => {
 
 const drawPaddle = (x, y, ctx) => {
     ctx.fillStyle = '#00ff99';
-    ctx.fillRect(x * TILE_SIZE - TILE_SIZE / 2, y * TILE_SIZE, TILE_SIZE * 2, 2);
+    ctx.fillRect(
+        x * TILE_SIZE - TILE_SIZE / 2,
+        y * TILE_SIZE,
+        TILE_SIZE * 2,
+        2
+    );
 };
 
 const drawScore = (score, ctx) => {
@@ -147,12 +151,12 @@ let state = getInitialState(26, 46);
 let score = 0;
 
 const main = async () => {
-    const file = '/puzzle_input';
+    const file = './puzzle_input';
     try {
         const puzzle_input = await readPuzzleInput(file);
         const events = game(puzzle_input);
         let eventsCopy = [];
-        
+
         const timer = new Timer(1 / 30);
         timer.update = (deltaTime) => {
             if (eventsCopy.length === 0) {

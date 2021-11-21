@@ -4,7 +4,7 @@ export class Droid {
     constructor(x, y, code) {
         this.x = x;
         this.y = y;
-        this.computer = IntcodeComputer(code, [1]);
+        this.computer = IntcodeComputer(code, true, [1]);
     }
 
     move(dir) {

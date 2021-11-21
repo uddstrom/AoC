@@ -11,9 +11,10 @@ class Instruction {
     }
 }
 
-function* IntcodeComputer(code, stack = []) {
+function* IntcodeComputer(code, useStack = true, stack = []) {
     const program = [...code];
     const _stack = [...stack];
+    let _input;
     let ip = 0;
     let rb = 0;
 
@@ -58,7 +59,7 @@ function* IntcodeComputer(code, stack = []) {
                 break;
             case 3:
                 // Input
-                const inputVal = _stack.shift();
+                const inputVal = useStack ? _stack.shift() : _input;
                 const out_address =
                     (PARAM_MODES[0] === 2 ? rb : 0) + program[ip + 1];
                 program[out_address] = Number(inputVal);
@@ -97,11 +98,15 @@ function* IntcodeComputer(code, stack = []) {
     }
 
     for (const i of getInstructions()) {
+        // console.log(i);
         if (i.OPCODE === 99) return;
         const output = execute(i);
         if (output !== undefined) {
             const input = yield output;
-            if (typeof input === 'number') _stack.push(input);
+            if (typeof input === 'number') {
+                _input = input;
+                useStack && _stack.push(input);
+            }
         }
     }
 }

@@ -22,7 +22,7 @@ const renderImage = (panels, ctx) => {
 };
 
 const main = async () => {
-    const file = '/puzzle_input';
+    const file = './puzzle_input';
     try {
         const puzzle_input = await readPuzzleInput(file);
         const answer_part_1 = PaintingRobot(puzzle_input).paint(0).size;

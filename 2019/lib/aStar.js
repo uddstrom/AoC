@@ -68,7 +68,7 @@ function aStar(start, goal, h) {
         var current = openSet.pop();
 
         if (current === goal) {
-            console.log('Done!');
+            // console.log(`Path from ${start.value} to ${goal.value} found.`);
             return reconstruct_path(current);
         }
 
@@ -100,7 +100,7 @@ function aStar(start, goal, h) {
 
     // Open set is empty but goal was never reached
     //return failure
-    console.log('No solution found!');
+    // console.log(`No solution found from ${start.value} to ${goal.value}`);
 }
 
 export default aStar;

@@ -1,7 +1,7 @@
 import { getData, getPath } from '../lib/utils.js';
-import aStar from '../lib/aStar.js';
+import { createGraph } from './graph.js';
 
-const PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
+const PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input_test`;
 
 var parser = (input) => {
     return input.split('\n').map((row) => row.split(''));
@@ -11,92 +11,34 @@ function print(maze) {
     maze.forEach((row) => console.log(row.join('')));
 }
 
-function printGrid(grid, path) {
-    var maze = grid.map((row, r) =>
-        row.map((col, c) => {
-            if (inPath(r, c, path)) return '*';
-            if (col.tile === '.') return ' ';
-            return col.tile;
-        })
-    );
-    print(maze);
-}
+var getDistance = (from, to) => {
+    return Math.abs(from.row - to.row) + Math.abs(from.col - to.col);
+};
 
-function inPath(r, c, path) {
-    return (
-        path &&
-        path.find((node) => node.row === r && node.col === c) !== undefined
-    );
-}
+function heuristic(start_node, key_nodes, steps = 0) {
+    // Returnerar antal steg som behövs för att samla alla nycklar.
+    // Strategin är att gå till närmsta nyckel först och avståndet
+    // beräknas med manhattan distance.
+    if (key_nodes.length === 0) return steps;
 
-function makeGrid(rows, cols) {
-    var g = new Array(rows);
-    g.fill(new Array(cols).fill());
-    return g;
-}
+    var keys = key_nodes.slice();
+    var keyDistances = keys.map((k) => getDistance(start_node, k));
+    var stepsToClosestKey = Math.min(...keyDistances);
+    var indexOfClosestKey = keyDistances.indexOf(stepsToClosestKey);
+    var closestKey = keys[indexOfClosestKey];
+    keys.splice(indexOfClosestKey, 1); // Removed closed key
 
-function node(row, col, tile) {
-    var wall = '#'.includes(tile);
-    var door = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(tile);
-    var key = 'abcdefghijklmnopqrstuvwxyz'.includes(tile);
-    return {
-        row,
-        col,
-        f: 0,
-        g: Number.MAX_SAFE_INTEGER,
-        neighbors: [],
-        previous: undefined,
-        wall,
-        door,
-        key,
-        tile,
-    };
-}
-
-function addNeighbors(row, col, grid) {
-    var neighbors = [];
-    if (row > 0 && !grid[row - 1][col].wall) neighbors.push(grid[row - 1][col]);
-    if (row < grid.length - 1 && !grid[row + 1][col].wall)
-        neighbors.push(grid[row + 1][col]);
-    if (col > 0 && !grid[row][col - 1].wall) neighbors.push(grid[row][col - 1]);
-    if (col < grid[row].length - 1 && !grid[row][col + 1].wall)
-        neighbors.push(grid[row][col + 1]);
-    return neighbors;
-}
-
-function find(tile, grid) {
-    for (var row of grid) {
-        for (var col of row) {
-            if (col.tile === tile) return col;
-        }
-    }
+    return h(closestKey, keys, steps + stepsToClosestKey);
 }
 
 const main = async () => {
     var maze = getData(PUZZLE_INPUT_PATH)(parser);
-    const ROWS = maze.length;
-    const COLS = maze[0].length;
-    // print(maze);
+    print(maze);
+    var graph = createGraph(maze);
+    graph.display();
+
     // console.log('Part 1:');
     // console.log('Part 2:');
-
-    var h = (node, goal) => {
-        return Math.abs(node.row - goal.row) + Math.abs(node.col - goal.col);
-    };
-
-    var grid = makeGrid(ROWS, COLS).map((row, r) =>
-        row.map((_, c) => node(r, c, maze[r][c]))
-    );
-    grid.forEach((row, r) =>
-        row.forEach((_, c) => (grid[r][c].neighbors = addNeighbors(r, c, grid)))
-    );
-
-    var start = find('@', grid);
-    var goal = find('z', grid);
-
-    var path = aStar(start, goal, h);
-
-    printGrid(grid, path);
 };
 
 main();

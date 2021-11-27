@@ -1,4 +1,4 @@
-class PrioQ {
+export class PrioQ {
     constructor(compareFn) {
         this.queue = [];
         this.compareFn = compareFn;

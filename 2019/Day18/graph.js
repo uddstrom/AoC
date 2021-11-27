@@ -32,12 +32,8 @@ class Graph {
 }
 
 export function createGraph(maze) {
-    var h = (node, goal) => {
-        return Math.abs(node.row - goal.row) + Math.abs(node.col - goal.col);
-    };
-    var { keys } = createGrid(maze);
-
     var graph = new Graph();
+
     keys.forEach((key) => {
         graph.addNode(key.value);
         keys.forEach((target) => {
@@ -49,7 +45,7 @@ export function createGraph(maze) {
             if (target !== key) {
                 var goal = find(target.value, grid);
                 var path = aStar(start, goal, h);
-                path && graph.addEdge(key.value, target.value, path.length);
+                path && graph.addEdge(key.value, target.value, path.length - 1);
             }
         });
     });

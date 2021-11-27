@@ -58,10 +58,10 @@ export function createGrid(maze) {
     grid.forEach((row, r) =>
         row.forEach((_, c) => (grid[r][c].neighbors = addNeighbors(r, c, grid)))
     );
-    var doors = grid.flat().filter((tile) => tile.door === true);
+
     var keys = grid.flat().filter((tile) => tile.key === true);
 
-    return { grid, doors, keys };
+    return { grid, keys };
 }
 
 export function printGrid(grid, path) {

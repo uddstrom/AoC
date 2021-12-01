@@ -2,10 +2,6 @@
 
 [Advent of Code](https://adventofcode.com/) solutions using JavaScript and Node.
 
-Run the solutions like so:
+Requires NodeJS with ES module support (>= 17.2.0)
 
-    $ cd 2020
-    $ node Day01/main
-    
-    
-    
+Some solutions need to run in a browser environment.

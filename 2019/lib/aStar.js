@@ -37,7 +37,7 @@ function reconstruct_path(_current) {
 // h is the heuristic function. h(n) estimates the cost to reach goal from node n.
 // g(n) is the cost from the start node to n.
 // compare is a function that defines the sort order of the nodes according to lowest fScore first.
-function aStar(start, goal, h) {
+export function aStar(start, goal, h) {
     // The set of discovered nodes that may need to be (re-)expanded.
     // Initially, only the start node is known.
     // This is usually implemented as a min-heap or priority queue rather than a hash-set.
@@ -102,5 +102,3 @@ function aStar(start, goal, h) {
     //return failure
     // console.log(`No solution found from ${start.value} to ${goal.value}`);
 }
-
-export default aStar;

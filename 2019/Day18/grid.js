@@ -1,3 +1,5 @@
+import { isDoor, isKey, isRobot, isWall } from './misc.js';
+
 function addNeighbors(row, col, grid) {
     var neighbors = [];
     if (row > 0 && !grid[row - 1][col].wall) neighbors.push(grid[row - 1][col]);
@@ -9,16 +11,17 @@ function addNeighbors(row, col, grid) {
     return neighbors;
 }
 
-function emptyGrid(rows, cols) {
+function createEmptyGrid(rows, cols) {
     var g = new Array(rows);
     g.fill(new Array(cols).fill());
     return g;
 }
 
-function tile(row, col, value) {
-    var wall = '#'.includes(value);
-    var door = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.includes(value);
-    var key = 'abcdefghijklmnopqrstuvwxyz'.includes(value);
+function createTile(row, col, value) {
+    var wall = isWall(value);
+    var door = isDoor(value);
+    var key = isKey(value);
+    var robot = isRobot(value);
     return {
         row,
         col,
@@ -29,6 +32,7 @@ function tile(row, col, value) {
         wall,
         door,
         key,
+        robot,
         value,
     };
 }
@@ -46,22 +50,25 @@ export function find(tile, grid) {
             if (col.value === tile) return col;
         }
     }
+    return undefined;
 }
 
 export function createGrid(maze) {
     const ROWS = maze.length;
     const COLS = maze[0].length;
 
-    var grid = emptyGrid(ROWS, COLS).map((row, r) =>
-        row.map((_, c) => tile(r, c, maze[r][c]))
+    var grid = createEmptyGrid(ROWS, COLS).map((row, r) =>
+        row.map((_, c) => createTile(r, c, maze[r][c]))
     );
     grid.forEach((row, r) =>
         row.forEach((_, c) => (grid[r][c].neighbors = addNeighbors(r, c, grid)))
     );
 
-    var keys = grid.flat().filter((tile) => tile.key === true);
+    var robots = grid.flat().filter((tile) => tile.robot);
+    var doors = grid.flat().filter((tile) => tile.door);
+    var keys = grid.flat().filter((tile) => tile.key);
 
-    return { grid, keys };
+    return { grid, robots, doors, keys };
 }
 
 export function printGrid(grid, path) {

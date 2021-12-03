@@ -12,3 +12,7 @@ export function getData(path) {
 export function getPath(url) {
     return dirname(fileURLToPath(url));
 }
+
+export function pow(base) {
+    return (exp) => Math.pow(base, exp);
+}

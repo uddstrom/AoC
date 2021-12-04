@@ -61,33 +61,29 @@ function* Tombola(numbers) {
     while (numbers.length > 0) yield numbers.shift();
 }
 
+function bingo(tombola) {
+    var scores = [];
+    return function play(boards) {
+        if (boards.length === 0) return [scores.shift(), scores.pop()];
+
+        var number = tombola.next().value;
+        boards.forEach(markNumber(number));
+        var [winner] = boards.filter(isWinner);
+
+        if (winner) scores.push(calculateScore(winner, number));
+
+        return play(boards.filter(not(isWinner)));
+    };
+}
+
 function main() {
     var [numbers, boards] = getData(PUZZLE_INPUT_PATH)(parser);
 
     var tombola = Tombola(numbers);
-    var firstWinner = undefined;
-    var lastWinner = undefined;
-    var number, first_winning_number;
+    var [first, last] = bingo(tombola)(boards);
 
-    while (boards.length > 0) {
-        number = tombola.next().value;
-        boards.forEach(markNumber(number));
-
-        var [winner] = boards.filter(isWinner);
-
-        if (winner) {
-            if (firstWinner === undefined) {
-                firstWinner = winner;
-                first_winning_number = number;
-            }
-            if (boards.length === 1) lastWinner = winner;
-        }
-
-        boards = boards.filter(not(isWinner));
-    }
-
-    console.log('Part 1:', calculateScore(firstWinner, first_winning_number));
-    console.log('Part 2:', calculateScore(lastWinner, number));
+    console.log('Part 1:', first);
+    console.log('Part 2:', last);
 }
 
 main();

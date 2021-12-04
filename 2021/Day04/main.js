@@ -35,8 +35,9 @@ function addColumns(board) {
     return [...board, ...columns];
 }
 
-var isComplete = (row) => !row.find(({ n, marked }) => !marked);
-var isWinner = (board) => board.filter(isComplete).length > 0;
+var isMarked = (cell) => cell.marked;
+var isComplete = (row) => row.every(isMarked);
+var isWinner = (board) => board.some(isComplete);
 
 function markNumber(numberToMark) {
     return function (board) {

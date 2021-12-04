@@ -1,4 +1,5 @@
 import { getData, getPath } from '../lib/utils.js';
+import { not } from '../lib/fn.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
@@ -28,11 +29,14 @@ function boardReducer(boards, row, idx) {
 }
 
 function addColumns(board) {
-    return [0, 1, 2, 3, 4].map((c) => [0, 1, 2, 3, 4].map((r) => board[r][c]));
+    var columns = [0, 1, 2, 3, 4].map((c) =>
+        [0, 1, 2, 3, 4].map((r) => board[r][c])
+    );
+    return [...board, ...columns];
 }
 
 var isComplete = (row) => !row.find(({ n, marked }) => !marked);
-var checkBoard = (board) => board.filter(isComplete).length > 0;
+var isWinner = (board) => board.filter(isComplete).length > 0;
 
 function markNumber(board, numberToMark) {
     board.forEach((row) =>
@@ -58,17 +62,29 @@ function main() {
     var [numbers, boards] = getData(PUZZLE_INPUT_PATH)(parser);
 
     var tombola = Tombola(numbers);
-    var winner = undefined;
-    var number;
+    var firstWinner = undefined;
+    var lastWinner = undefined;
+    var number, first_winning_number;
 
-    while (winner === undefined) {
+    while (boards.length > 0) {
         number = tombola.next().value;
         boards.forEach((board) => markNumber(board, number));
-        [winner] = boards.filter(checkBoard);
+
+        var [winner] = boards.filter(isWinner);
+
+        if (winner) {
+            if (firstWinner === undefined) {
+                firstWinner = winner;
+                first_winning_number = number;
+            }
+            if (boards.length === 1) lastWinner = winner;
+        }
+
+        boards = boards.filter(not(isWinner));
     }
 
-    console.log('Part 1:', calculateScore(winner, number));
-    console.log('Part 2: todo');
+    console.log('Part 1:', calculateScore(firstWinner, first_winning_number));
+    console.log('Part 2:', calculateScore(lastWinner, number));
 }
 
 main();

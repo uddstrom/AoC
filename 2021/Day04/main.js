@@ -38,12 +38,14 @@ function addColumns(board) {
 var isComplete = (row) => !row.find(({ n, marked }) => !marked);
 var isWinner = (board) => board.filter(isComplete).length > 0;
 
-function markNumber(board, numberToMark) {
-    board.forEach((row) =>
-        row.forEach((number) => {
-            number.marked = number.marked || number.n === numberToMark;
-        })
-    );
+function markNumber(numberToMark) {
+    return function (board) {
+        board.forEach((row) =>
+            row.forEach((number) => {
+                number.marked = number.marked || number.n === numberToMark;
+            })
+        );
+    };
 }
 
 function calculateScore(board, lastNumber) {
@@ -68,7 +70,7 @@ function main() {
 
     while (boards.length > 0) {
         number = tombola.next().value;
-        boards.forEach((board) => markNumber(board, number));
+        boards.forEach(markNumber(number));
 
         var [winner] = boards.filter(isWinner);
 

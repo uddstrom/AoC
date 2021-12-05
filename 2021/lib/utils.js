@@ -15,6 +15,11 @@ export function getPath(url) {
 
 // fills an array with numbers values from start to end
 export function range(start, end) {
+    if (start > end) {
+        return Array(start - end + 1)
+            .fill()
+            .map((_, idx) => start - idx);
+    }
     return Array(end - start + 1)
         .fill()
         .map((_, idx) => start + idx);

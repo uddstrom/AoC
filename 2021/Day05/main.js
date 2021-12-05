@@ -22,23 +22,26 @@ function toPoints({
     start: { x: start_x, y: start_y },
     end: { x: end_x, y: end_y },
 }) {
-    var xs = start_x <= end_x ? range(start_x, end_x) : range(end_x, start_x);
-    var ys = start_y <= end_y ? range(start_y, end_y) : range(end_y, start_y);
+    var xs = range(start_x, end_x);
+    var ys = range(start_y, end_y);
     var vecToString = ({ x, y }) => `${x},${y}`;
+    var points;
+    // horisontal/vertical
+    if (xs.length === 1 || ys.length === 1) {
+        points = xs.map((x) => {
+            return ys.map((y) => ({
+                x,
+                y,
+            }));
+        });
+    } else {
+        points = xs.map((x, idx) => ({ x: x, y: ys[idx] }));
+    }
 
-    var points = xs.map((x) => {
-        return ys.map((y) => ({
-            x,
-            y,
-        }));
-    });
     return points.flat().map(vecToString);
 }
 
-function countOverlaps(vectors) {
-    var horisontalOrVertical = (vec) =>
-        vec.start.x === vec.end.x || vec.start.y === vec.end.y;
-    var points = vectors.filter(horisontalOrVertical).map(toPoints).flat();
+function countOverlaps(points) {
     var ventsMap = new Map();
     points.forEach((p) => {
         let n = ventsMap.get(p);
@@ -50,8 +53,13 @@ function countOverlaps(vectors) {
 function main() {
     var vectors = getData(PUZZLE_INPUT_PATH)(parser);
 
-    console.log('Part 1:', countOverlaps(vectors));
-    console.log('Part 2:');
+    var horisontalOrVertical = (vec) =>
+        vec.start.x === vec.end.x || vec.start.y === vec.end.y;
+    var points1 = vectors.filter(horisontalOrVertical).map(toPoints).flat();
+    var points2 = vectors.map(toPoints).flat();
+
+    console.log('Part 1:', countOverlaps(points1));
+    console.log('Part 2:', countOverlaps(points2));
 }
 
 main();

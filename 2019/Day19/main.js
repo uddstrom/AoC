@@ -1,8 +1,11 @@
 import IntcodeComputer from '../lib/IntcodeComputer.js';
-// import {
-//     getData,
-//     getPath,
-// } from '../lib/utils.js';
+import draw from './draw.js';
+
+const X_MIN = 180;
+const X_MAX = 420;
+
+const Y_MIN = 800;
+const Y_MAX = 1100;
 
 function readPuzzleInput(file) {
     return new Promise((resolve, reject) => {
@@ -16,10 +19,6 @@ function readPuzzleInput(file) {
     });
 }
 
-function parser(input) {
-    return input.split(',').map(Number);
-}
-
 function initDroneSystem(program) {
     return function deployDrone(x, y) {
         var computer = IntcodeComputer(program, true, [x, y]);
@@ -28,53 +27,55 @@ function initDroneSystem(program) {
     };
 }
 
-function drawGrid(ctx) {
-    ctx.beginPath();
-    ctx.lineWidth = '1';
-    ctx.strokeStyle = 'black';
-    for (var x = 0; x < 10; x++) {
-        for (var y = 0; y < 6; y++) {
-            ctx.rect(x * 100, y * 100, 100, 100);
-            ctx.stroke();
-        }
-    }
-}
-
-function draw(x, y, ctx, offsetY = 0) {
-    ctx.fillRect(x, y - offsetY, 1, 1);
-}
-
-async function main() {
-    const program = await readPuzzleInput('./puzzle_input');
-
-    const canvas = document.getElementById('screen');
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'deeppink';
-
-    // const PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
-    // var program = getData(PUZZLE_INPUT_PATH)(parser);
-
+function solvePart1(program) {
     var deploy = initDroneSystem(program);
     var affectedPoints = [];
-
-    console.log('Setting up points.');
-
-    for (var x = 100; x < 400; x++) {
-        for (var y = 800; y < 1200; y++) {
+    
+    for (var x = 0; x < 50; x++) {
+        for (var y = 0; y < 50; y++) {
             if (deploy(x, y).value === 1) {
                 affectedPoints.push({ x, y });
             }
         }
     }
+    return affectedPoints.length;
+}
 
-    console.log('point setup done.');
+function find100x100(points) {
+    var xMax = (points, Y) => Math.max(...points.filter(({_, y}) => y === Y).map(({ x, _ }) => x));
+    var xMin = (points, Y) => Math.min(...points.filter(({_, y}) => y === Y).map(({ x, _ }) => x));
+    
+    for (var Y = Y_MIN; Y < Y_MAX; Y++) {
+        var xmax = xMax(points, Y);
+        var xmin = xMin(points, Y + 99);
+        if (xmax - xmin >= 99) return { x: xmax - 99, y: Y };
+    }
+}
 
-    affectedPoints.forEach(({ x, y }) => draw(x, y, ctx, 800));
+function calculateBeamPoints(program) {
+    var deploy = initDroneSystem(program);
+    var affectedPoints = [];
 
-    drawGrid(ctx);
+    for (var x = X_MIN; x < X_MAX; x++) {
+        for (var y = Y_MIN; y < Y_MAX; y++) {
+            if (deploy(x, y).value === 1) {
+                affectedPoints.push({ x, y });
+            }
+        }
+    }
+    return affectedPoints;
+}
 
-    console.log('Part 1:', affectedPoints.length);
-    console.log('Part 2:');
+async function main() {
+    const program = await readPuzzleInput('./puzzle_input');
+    console.log('Part 1:', solvePart1(program));
+
+    var points = calculateBeamPoints(program);
+    var topLeft = find100x100(points);
+    
+    console.log('Part 2:', topLeft.x * 10000 + topLeft.y);
+
+    draw(points, topLeft, Y_MIN);
 }
 
 main();

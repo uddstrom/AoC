@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,4 +24,12 @@ export function range(start, end) {
     return Array(end - start + 1)
         .fill()
         .map((_, idx) => start + idx);
+}
+
+export function count(el, arr) {
+  return arr.filter(e => e === el).length;  
+}
+
+export function sum(arr) {
+    return arr.reduce((acc, curr) => acc + curr, 0);  
 }

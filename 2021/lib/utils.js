@@ -27,9 +27,17 @@ export function range(start, end) {
 }
 
 export function count(el, arr) {
-  return arr.filter(e => e === el).length;  
+    return arr.filter((e) => e === el).length;
+}
+
+export function min(arr) {
+    return Math.min(...arr);
+}
+
+export function max(arr) {
+    return Math.max(...arr);
 }
 
 export function sum(arr) {
-    return arr.reduce((acc, curr) => acc + curr, 0);  
+    return arr.reduce((acc, curr) => acc + curr, 0);
 }

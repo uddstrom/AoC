@@ -34,6 +34,12 @@ export function not(fn) {
     };
 }
 
+export function isOdd(n) {
+    return n % 2 === 1;
+}
+
+export var isEven = not(isOdd);
+
 export function trampoline(fn) {
     return function trampolined(...args) {
         var result = fn(...args);

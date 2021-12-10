@@ -7,31 +7,46 @@ function parser(input) {
     return input.split('\n');
 }
 
-function syntaxChecker(lines) {
-    let isOpen = (chr) => '([{<'.includes(chr);
-    let map = new Map([
-        ['(', ')'],
-        ['[', ']'],
-        ['{', '}'],
-        ['<', '>'],
-    ]);
-    return lines
-        .map((line) => {
-            let openStack = [];
-            line = line.split('');
-            while (line.length > 0) {
-                let next = line.shift();
-                if (isOpen(next)) openStack.push(next);
-                else {
-                    let expected = map.get(openStack.pop());
-                    if (expected !== next) return next;
+let isOpen = (chr) => '([{<'.includes(chr);
+let _openCloseMap = new Map([
+    ['(', ')'],
+    ['[', ']'],
+    ['{', '}'],
+    ['<', '>'],
+]);
+
+function syntaxCheckAndAutoComplete(lines) {
+    let illegals = [];
+    let completers = [];
+
+    lines.forEach((line) => {
+        let openStack = [];
+        line = line.split('');
+        while (line.length > 0) {
+            let next = line.shift();
+            if (isOpen(next)) openStack.push(next);
+            else {
+                let expected = _openCloseMap.get(openStack.pop());
+                if (expected !== next) {
+                    // corrupt line
+                    illegals.push(next);
+                    return;
                 }
             }
-        })
-        .filter((c) => c);
+        }
+        // incomplete line
+        completers.push(
+            openStack
+                .map((chr) => _openCloseMap.get(chr))
+                .reverse()
+                .join('')
+        );
+    });
+
+    return { illegals, completers };
 }
 
-function scoreCalculator(illegals) {
+function errorScoreCalculator({ illegals }) {
     let scoreMap = new Map([
         [')', 3],
         [']', 57],
@@ -42,12 +57,30 @@ function scoreCalculator(illegals) {
     return sum(illegals.map(getScore));
 }
 
+function autoCompleteScoreCalculator({ completers }) {
+    let scoreMap = new Map([
+        [')', 1],
+        [']', 2],
+        ['}', 3],
+        ['>', 4],
+    ]);
+    let getScore = (string) => string.split('').map((chr) => scoreMap.get(chr));
+    var scores = completers
+        .map(getScore)
+        .map((score) => score.reduce((total, score) => total * 5 + score, 0))
+        .sort((a, b) => a - b);
+    return scores[Math.floor(scores.length / 2)];
+}
+
 function main() {
     let lines = getData(PUZZLE_INPUT_PATH)(parser);
-    let part1 = compose(scoreCalculator, syntaxChecker);
-
+    let part1 = compose(errorScoreCalculator, syntaxCheckAndAutoComplete);
+    let part2 = compose(
+        autoCompleteScoreCalculator,
+        syntaxCheckAndAutoComplete
+    );
     console.log('Part 1:', part1(lines));
-    console.log('Part 2:');
+    console.log('Part 2:', part2(lines));
 }
 
 main();

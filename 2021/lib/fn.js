@@ -34,6 +34,12 @@ export function not(fn) {
     };
 }
 
+export function flip(fn) {
+    return function flipped(arg1, arg2, ...args) {
+        return fn(arg2, arg1, ...args);
+    };
+}
+
 export function trampoline(fn) {
     return function trampolined(...args) {
         var result = fn(...args);

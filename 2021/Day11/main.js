@@ -60,12 +60,12 @@ function resetFlash(octo) {
 function octoSimulator(octoGrid) {
     return function run(steps) {
         function update(grid, step = 0, flashCountAcc = 0) {
-            if (steps && step === steps) return flashCountAcc;
+            if (steps && step === steps) return flashCountAcc; // part 1
             let updatedGrid = grid.map(resetFlash).map(updateOcto);
-            let flashed = updatedGrid.filter((o) => o.flash);
-            updatedGrid = updateNeighbors(updatedGrid, flashed);
+            let flashers = updatedGrid.filter((o) => o.flash);
+            updatedGrid = updateNeighbors(updatedGrid, flashers);
             let flashCount = updatedGrid.filter((o) => o.flash).length;
-            if (flashCount === 100) return step + 1;
+            if (flashCount === 100) return step + 1; // part 2
             return update(updatedGrid, step + 1, flashCountAcc + flashCount);
         }
         return update(octoGrid);
@@ -73,8 +73,8 @@ function octoSimulator(octoGrid) {
 }
 
 function main() {
-    let _octoGrid = getData(PUZZLE_INPUT_PATH)(parser);
-    let simulate = octoSimulator(_octoGrid);
+    let octoGrid = getData(PUZZLE_INPUT_PATH)(parser);
+    let simulate = octoSimulator(octoGrid);
     console.log('Part 1:', simulate(100));
     console.log('Part 2:', simulate());
 }

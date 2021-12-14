@@ -31,7 +31,7 @@ function executeFold(paper, { dir, fpos }, idx) {
         let bottom_size = ROWS - fpos - 1;
         let newRowSize = Math.max(top_size, bottom_size);
 
-        function get(r, c) {
+        function hMerge(r, c) {
             if (top_size === bottom_size) {
                 return paper[r][c] || paper[ROWS - r - 1][c];
             }
@@ -49,7 +49,7 @@ function executeFold(paper, { dir, fpos }, idx) {
         let foldedPaper = matrix(newRowSize, COLS);
         for (let r = 0; r < newRowSize; r++) {
             for (let c = 0; c < COLS; c++) {
-                foldedPaper[r][c] = get(r, c);
+                foldedPaper[r][c] = hMerge(r, c);
             }
         }
         return foldedPaper;
@@ -60,7 +60,7 @@ function executeFold(paper, { dir, fpos }, idx) {
         let right_size = COLS - fpos - 1;
         let newColSize = Math.max(left_size, right_size);
 
-        function get(r, c) {
+        function vMerge(r, c) {
             if (left_size === right_size) {
                 return paper[r][c] || paper[r][COLS - c - 1];
             }
@@ -78,7 +78,7 @@ function executeFold(paper, { dir, fpos }, idx) {
         let foldedPaper = matrix(ROWS, newColSize);
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < newColSize; c++) {
-                foldedPaper[r][c] = get(r, c);
+                foldedPaper[r][c] = vMerge(r, c);
             }
         }
         return foldedPaper;
@@ -100,10 +100,10 @@ function preparePaper(coords) {
 }
 
 function main() {
-    let [coords, folds] = getData(PUZZLE_INPUT_PATH)(parser);
-    let paper = folds.reduce(executeFold, preparePaper(coords));
+    let [coords, foldInstr] = getData(PUZZLE_INPUT_PATH)(parser);
+    let foldedPaper = foldInstr.reduce(executeFold, preparePaper(coords));
     console.log('Part 2:');
-    print(paper);
+    print(foldedPaper);
 }
 
 main();

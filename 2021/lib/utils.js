@@ -27,6 +27,10 @@ export function range(start, end) {
         .map((_, idx) => start + idx);
 }
 
+export function matrix(r, c, initVal = 0) {
+    return Array(r).fill().map(()=>Array(c).fill(initVal));
+}
+
 export function count(el, arr) {
     return arr.filter((e) => e === el).length;
 }

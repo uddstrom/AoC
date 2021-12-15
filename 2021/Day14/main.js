@@ -10,43 +10,48 @@ function parser(input) {
 }
 
 function toPairs(str) {
-    return str
-        .split('')
-        .map((el, idx, arr) => {
-            return el + arr[idx + 1];
-        })
-        .slice(0, str.length - 1);
+    let pairCount = new Map();
+    str.split('')
+        .map((el, idx, arr) => el + arr[idx + 1])
+        .slice(0, str.length - 1)
+        .forEach((pair) => {
+            let cnt = pairCount.get(pair) || 0;
+            pairCount.set(pair, cnt + 1);
+        });
+    return pairCount;
 }
 
 function createPolymerProcessor(ruleMap) {
-    let insert = (pair) =>
-        `${pair.split('')[0]}${ruleMap.get(pair)}${pair.split('')[1]}`;
+    let insert = (pair) => `${pair[0]}${ruleMap.get(pair)}${pair[1]}`;
     return function processor(template) {
         return function process(steps) {
-            let polymer = template;
+            let pairs = toPairs(template);
             while (steps > 0) {
-                let pairs = toPairs(polymer);
-                polymer = pairs.reduce((acc, pair) => {
-                    let next =
-                        acc.length > 0
-                            ? insert(pair).substring(1)
-                            : insert(pair);
-                    return acc + next;
-                }, '');
+                let temp = new Map();
+                for (let [pair, count] of pairs.entries()) {
+                    let newPairs = toPairs(insert(pair));
+                    for (let [newPair, newCount] of newPairs.entries()) {
+                        let cnt = temp.get(newPair) || 0;
+                        temp.set(newPair, cnt + newCount * count);
+                    }
+                }
+                pairs = temp;
                 steps--;
             }
-            return polymer;
+            return pairs;
         };
     };
 }
 
-function calculateAnswer(polymer) {
-    let resultArr = polymer.split('');
-    let distinctLetters = [...new Set(resultArr)];
-    let countArr = distinctLetters.map((letter) => count(letter, resultArr));
-    let min = Math.min(...countArr);
-    let max = Math.max(...countArr);
-    return max - min;
+function calculateAnswer(pairs, template) {
+    let elCount = new Map();
+    elCount.set(template[0], 1);
+    for (let [pair, count] of pairs) {
+        let second = pair.split('')[1];
+        let curr = elCount.get(second) || 0;
+        elCount.set(second, curr + count);
+    }
+    return Math.max(...elCount.values()) - Math.min(...elCount.values());
 }
 
 function main() {
@@ -54,14 +59,8 @@ function main() {
     let processor = createPolymerProcessor(ruleMap);
     let result10 = processor(template)(10);
     let result40 = processor(template)(40);
-    console.log('Part 1:', calculateAnswer(result10));
-    console.log('Part 2:', calculateAnswer(result40));
+    console.log('Part 1:', calculateAnswer(result10, template));
+    console.log('Part 2:', calculateAnswer(result40, template));
 }
 
 main();
-
-/*
-NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB
-NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB
-
-*/

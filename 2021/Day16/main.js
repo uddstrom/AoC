@@ -8,13 +8,13 @@ function parser(input) {
 let hexToBin = (hex) => parseInt(hex, 16).toString(2).padStart(4, '0');
 
 function* streamReader(stream) {
-    let bitesToRead = 0;
+    let bitsToRead = 0;
     let acc = 0;
     while (true) {
         if (acc >= stream.length)
-            return stream.substring(acc - bitesToRead, stream.length);
-        bitesToRead = yield stream.substring(acc - bitesToRead, acc);
-        acc += bitesToRead;
+            return stream.substring(acc - bitsToRead, stream.length);
+        bitsToRead = yield stream.substring(acc - bitsToRead, acc);
+        acc += bitsToRead;
     }
 }
 
@@ -33,7 +33,6 @@ function readPacket(reader, readXtra = true) {
             values.push(reader.next(4).value);
             bitCnt += 5;
         }
-        let xtra = '';
         let xtraBits = readXtra ? 4 - (bitCnt % 4) : 0;
         let { value, done } = reader.next(xtraBits);
         return [b2i(values.join('')), done];
@@ -59,40 +58,28 @@ function readPacket(reader, readXtra = true) {
                 more = !done;
             }
 
-            /*
-            0011100000000000011011 11010001010 0101001000100100 0000000
-            VVVTTTILLLLLLLLLLLLLLL AAAAAAAAAAA BBBBBBBBBBBBBBBB
-
-            010 100 1 00010100
-            */
-
-            let readXtra = 4 - (bitCnt % 4);
-            let { value, done } = reader.next(readXtra);
+            let xtraBits = readXtra ? 4 - (bitCnt % 4) : 0;
+            let { value, done } = reader.next(xtraBits);
             return [subPacks, done];
         }
         if (lengthTypeId === '1') {
             // the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet
             let numberOfSubPackets = reader.next(11);
             bitCnt += 11;
-            let xtra = '';
-            let readXtra = 4 - (bitCnt % 4);
-            if (readXtra > 0) xtra = reader.next(readXtra).value;
-            console.log(version, type, numberOfSubPackets, xtra);
+            let xtraBits = readXtra ? 4 - (bitCnt % 4) : 0;
+            let { value, done } = reader.next(xtraBits);
+            return ['todo', done];
         }
     }
 }
 
-// 110 100 10111 11110 00101 000
-
 function main() {
     let data = getData(PUZZLE_INPUT_PATH)(parser);
     // data = '110100101111111000101000'; // literal packet
-    data = '00111000000000000110111101000101001010010001001000000000'; // operator packet, length type 0, 10, 20
+    data = '00111000000000000110111101000101001010010001001000000000'; // operator packet, length type 0, => 10, 20
     let reader = streamReader(data);
     reader.next();
     console.log(readPacket(reader));
-
-    console.log('Part 2:');
 }
 
 main();

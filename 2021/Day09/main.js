@@ -1,4 +1,5 @@
 import { getData, getPath, sum } from '../lib/utils.js';
+import { getNeighbors } from '../lib/grid.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
@@ -8,17 +9,6 @@ function parser(input) {
         .map((row, r) =>
             row.split('').map((col, c) => ({ r, c, value: Number(col) }))
         );
-}
-
-function getNeighbors(M) {
-    return function ({ r, c }) {
-        let neighbors = [];
-        if (r > 0) neighbors.push(M[r - 1][c]); // top
-        if (c + 1 < M[0].length) neighbors.push(M[r][c + 1]); // right
-        if (r + 1 < M.length) neighbors.push(M[r + 1][c]); // bottom
-        if (c > 0) neighbors.push(M[r][c - 1]); // left
-        return neighbors;
-    };
 }
 
 function findLowPoints(matrix) {

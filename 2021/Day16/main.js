@@ -1,4 +1,4 @@
-import { getData, getPath } from '../lib/utils.js';
+import { getData, getPath, range, sum } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 function parser(input) {
@@ -18,10 +18,12 @@ function* streamReader(stream) {
     }
 }
 
+let versions = [];
 let b2i = (bStr) => parseInt(bStr, 2);
 
 function readPacket(reader, readXtra = true) {
     let version = reader.next(3).value;
+    versions.push(version);
     let type = reader.next(3).value;
     let bitCnt = 6;
     if (b2i(type) === 4) {
@@ -64,11 +66,16 @@ function readPacket(reader, readXtra = true) {
         }
         if (lengthTypeId === '1') {
             // the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet
-            let numberOfSubPackets = reader.next(11);
+            let numberOfSubPackets = b2i(reader.next(11).value);
             bitCnt += 11;
+
+            let subPacks = range(0, numberOfSubPackets - 1)
+                .map((_) => readPacket(reader, false))
+                .map(([subPack, done]) => subPack);
+
             let xtraBits = readXtra ? 4 - (bitCnt % 4) : 0;
             let { value, done } = reader.next(xtraBits);
-            return ['todo', done];
+            return [subPacks, done];
         }
     }
 }
@@ -76,10 +83,20 @@ function readPacket(reader, readXtra = true) {
 function main() {
     let data = getData(PUZZLE_INPUT_PATH)(parser);
     // data = '110100101111111000101000'; // literal packet
-    data = '00111000000000000110111101000101001010010001001000000000'; // operator packet, length type 0, => 10, 20
+    // data = '00111000000000000110111101000101001010010001001000000000'; // operator packet, length type 0, => 10, 20
+    //data = '11101110000000001101010000001100100000100011000001100000'; // operator packet, length type 1, => 1, 2, 3
     let reader = streamReader(data);
     reader.next();
-    console.log(readPacket(reader));
+
+    let packs = [];
+    let more = true;
+    // while (more) {
+    let [pack, done] = readPacket(reader);
+    // packs.push(pack);
+    // more = !done;
+    // }
+
+    console.log('Part 1: ', sum(versions.map(b2i)));
 }
 
 main();

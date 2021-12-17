@@ -15,6 +15,12 @@ export function getPath(url) {
     return dirname(fileURLToPath(url));
 }
 
+export function rng(length) {
+    return Array(length)
+        .fill()
+        .map((_, idx) => idx);
+}
+
 // fills an array with numbers values from start to end
 export function range(start, end) {
     if (start > end) {

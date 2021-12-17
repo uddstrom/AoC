@@ -28,7 +28,9 @@ export function range(start, end) {
 }
 
 export function matrix(r, c, initVal = 0) {
-    return Array(r).fill().map(()=>Array(c).fill(initVal));
+    return Array(r)
+        .fill()
+        .map(() => Array(c).fill(initVal));
 }
 
 export function count(el, arr) {
@@ -45,6 +47,10 @@ export function max(arr) {
 
 export function sum(arr) {
     return arr.reduce((acc, curr) => acc + curr, 0);
+}
+
+export function product(arr) {
+    return arr.reduce((acc, curr) => acc * curr);
 }
 
 export function isOdd(n) {

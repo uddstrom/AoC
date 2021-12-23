@@ -65,6 +65,8 @@ export function isOdd(n) {
 
 export var isEven = not(isOdd);
 
+export var random = (max) => Math.floor(Math.random() * max);
+
 // Generate all permutations of an array A,
 // stores them in the set S and returns S.
 export function generatePermutations(array) {

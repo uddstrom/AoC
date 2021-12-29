@@ -49,7 +49,7 @@ function reboot(instructions) {
     let count = new Set();
 
     function id(cuboid) {
-        return `${cuboid.coords[0][0]},${cuboid.coords[0][1]},${cuboid.coords[1][0]},${cuboid.coords[1][1]},${cuboid.coords[2][0]},${cuboid.coords[2][1]}`;
+        return `${cuboid[0][0]},${cuboid[0][1]},${cuboid[1][0]},${cuboid[1][1]},${cuboid[2][0]},${cuboid[2][1]}`;
     }
 
     function split(i) {
@@ -60,30 +60,29 @@ function reboot(instructions) {
         let zmin = i.coords[2][0];
         let zmax = i.coords[2][1];
 
-        // let cubes = new Set();
         X.filter((x) => x >= xmin && x <= xmax).forEach((x, ix, xarr) =>
             Y.filter((y) => y >= ymin && y <= ymax).forEach((y, iy, yarr) =>
                 Z.filter((z) => z >= zmin && z <= zmax).forEach(
                     (z, iz, zarr) => {
-                        let coords = matrix(3, 2);
-                        coords[0][0] = x;
-                        coords[0][1] =
+                        let cuboid = matrix(3, 2);
+                        cuboid[0][0] = x;
+                        cuboid[0][1] =
                             xarr[ix + 1] !== undefined
                                 ? xarr[ix + 1] - 1
                                 : xmax;
-                        coords[1][0] = y;
-                        coords[1][1] =
+                        cuboid[1][0] = y;
+                        cuboid[1][1] =
                             yarr[iy + 1] !== undefined
                                 ? yarr[iy + 1] - 1
                                 : ymax;
-                        coords[2][0] = z;
-                        coords[2][1] =
+                        cuboid[2][0] = z;
+                        cuboid[2][1] =
                             zarr[iz + 1] !== undefined
                                 ? zarr[iz + 1] - 1
                                 : zmax;
                         i.state
-                            ? count.add(id({ coords }))
-                            : count.delete(id({ coords }));
+                            ? count.add(id(cuboid))
+                            : count.delete(id(cuboid));
                     }
                 )
             )

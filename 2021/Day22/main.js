@@ -1,106 +1,93 @@
-import { getData, getPath, matrix, range } from '../lib/utils.js';
+import { getData, getPath } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 var parser = (input) => {
-    let instructions = input
+    return input
         .split('\n')
         .map((line) => line.split(' '))
         .map(([state, coords]) => {
-            state = state === 'on' ? true : false;
             coords = coords
                 .split(',')
                 .map((coord) => coord.substring(2).split('..').map(Number));
-            return { state, coords };
+            return {
+                state: state === 'on' ? 1 : 0,
+                xmin: coords[0][0],
+                xmax: coords[0][1],
+                ymin: coords[1][0],
+                ymax: coords[1][1],
+                zmin: coords[2][0],
+                zmax: coords[2][1],
+            };
         });
-    return instructions;
 };
 
-function init(instructions) {
-    return reboot(instructions.slice(0, 20));
+function reboot(instructions, cuboids = []) {
+    if (instructions.length === 0)
+        return cuboids.reduce((acc, curr) => acc + volume(curr), 0);
+    let instr = instructions.shift();
+    let newCuboids = [];
+    if (instr.state === 1) newCuboids.push(instr);
+    cuboids.forEach((c) => {
+        let i = intersection(c, instr);
+        if (i) newCuboids.push(i);
+    });
+    return reboot(instructions, [...cuboids, ...newCuboids]);
 }
 
-function volume(cuboid_id) {
-    let coords = cuboid_id.split(',');
-    let dx = coords[1] - coords[0] + 1;
-    let dy = coords[3] - coords[2] + 1;
-    let dz = coords[5] - coords[4] + 1;
+function volume(cuboid) {
+    let dx = cuboid.xmax - cuboid.xmin + 1;
+    let dy = cuboid.ymax - cuboid.ymin + 1;
+    let dz = cuboid.zmax - cuboid.zmin + 1;
     let v = dx * dy * dz;
-    return v;
+    return cuboid.state === 1 ? v : v * -1;
 }
 
-function reboot(instructions) {
-    let X = new Set();
-    let Y = new Set();
-    let Z = new Set();
-
-    instructions.forEach((i) => {
-        X.add(i.coords[0][0]);
-        X.add(i.coords[0][1] + 1);
-        Y.add(i.coords[1][0]);
-        Y.add(i.coords[1][1] + 1);
-        Z.add(i.coords[2][0]);
-        Z.add(i.coords[2][1] + 1);
-    });
-
-    X = Array.from(X).sort((a, b) => a - b);
-    Y = Array.from(Y).sort((a, b) => a - b);
-    Z = Array.from(Z).sort((a, b) => a - b);
-
-    let count = new Set();
-
-    function id(cuboid) {
-        return `${cuboid[0][0]},${cuboid[0][1]},${cuboid[1][0]},${cuboid[1][1]},${cuboid[2][0]},${cuboid[2][1]}`;
+function intersection(c1, c2) {
+    let x = intersect(c1.xmin, c1.xmax, c2.xmin, c2.xmax);
+    if (x.length > 0) {
+        let y = intersect(c1.ymin, c1.ymax, c2.ymin, c2.ymax);
+        if (y.length > 0) {
+            let z = intersect(c1.zmin, c1.zmax, c2.zmin, c2.zmax);
+            if (z.length > 0) {
+                return {
+                    state: c1.state === 1 ? 0 : 1,
+                    xmin: x[0],
+                    xmax: x[1],
+                    ymin: y[0],
+                    ymax: y[1],
+                    zmin: z[0],
+                    zmax: z[1],
+                };
+            }
+        }
     }
+}
 
-    function split(i) {
-        let xmin = i.coords[0][0];
-        let xmax = i.coords[0][1];
-        let ymin = i.coords[1][0];
-        let ymax = i.coords[1][1];
-        let zmin = i.coords[2][0];
-        let zmax = i.coords[2][1];
-
-        X.filter((x) => x >= xmin && x <= xmax).forEach((x, ix, xarr) =>
-            Y.filter((y) => y >= ymin && y <= ymax).forEach((y, iy, yarr) =>
-                Z.filter((z) => z >= zmin && z <= zmax).forEach(
-                    (z, iz, zarr) => {
-                        let cuboid = matrix(3, 2);
-                        cuboid[0][0] = x;
-                        cuboid[0][1] =
-                            xarr[ix + 1] !== undefined
-                                ? xarr[ix + 1] - 1
-                                : xmax;
-                        cuboid[1][0] = y;
-                        cuboid[1][1] =
-                            yarr[iy + 1] !== undefined
-                                ? yarr[iy + 1] - 1
-                                : ymax;
-                        cuboid[2][0] = z;
-                        cuboid[2][1] =
-                            zarr[iz + 1] !== undefined
-                                ? zarr[iz + 1] - 1
-                                : zmax;
-                        i.state
-                            ? count.add(id(cuboid))
-                            : count.delete(id(cuboid));
-                    }
-                )
-            )
-        );
+function intersect(min1, max1, min2, max2) {
+    let min, max;
+    for (let i = min1; i <= max1; i++) {
+        if (i >= min2 && i <= max2) {
+            min = i;
+            break;
+        }
     }
-
-    instructions.forEach((i, index) => {
-        split(i);
-        console.log(`processed ${index + 1} of ${instructions.length}`);
-    });
-
-    return [...count].reduce((acc, curr) => acc + volume(curr), 0);
+    if (min !== undefined) {
+        for (let i = max1; i >= min1; i--) {
+            if (i <= max2 && i >= min2) {
+                max = i;
+                break;
+            }
+        }
+        if (max !== undefined) {
+            return [min, max];
+        }
+    }
+    return [];
 }
 
 function main() {
     let instructions = getData(PUZZLE_INPUT_PATH)(parser);
-
-    console.log('Part 1:', init(instructions));
+    console.log('Part 1:', reboot(instructions.slice(0, 20)));
     console.log('Part 2:', reboot(instructions));
 }
 

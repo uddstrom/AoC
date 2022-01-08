@@ -69,7 +69,7 @@ function mouseClicked() {
     amphipod = amphipods.find((a) => a.active);
     if (amphipod) {
         amphipod.active = false;
-        let dest = getTile();
+        let dest = getClickedTile();
         if (!dest.wall && !isNoStop(dest) && !isOccupied(dest)) {
             if (amphipod.row === 1 && dest.row === 1) {
                 alert('Not allowed to move in corridor');
@@ -77,6 +77,8 @@ function mouseClicked() {
                 alert('Not allowed to enter that room');
             } else if (dest.room && !isCleanRoom(dest)) {
                 alert('Room must only contain one type');
+            } else if (checkPath(amphipod, dest)) {
+                alert('Other amphipod(s) blocking path');
             } else {
                 let d = distance(
                     { row: amphipod.row, col: amphipod.col },
@@ -95,6 +97,35 @@ function mouseClicked() {
     }
 }
 
+function checkPath(from, to) {
+    let pathTiles = [];
+    if (from.row > 1) {
+        range(from.row - 1, 1).forEach((row) =>
+            pathTiles.push({ row, col: from.col })
+        );
+    }
+    if (from.col < to.col) {
+        // heading right
+        range(from.col + 1, to.col).forEach((col) =>
+            pathTiles.push({ row: 1, col })
+        );
+    }
+    if (from.col > to.col) {
+        // heading left
+        range(from.col - 1, to.col).forEach((col) =>
+            pathTiles.push({ row: 1, col })
+        );
+    }
+    if (to.row > 1) {
+        range(to.row, 1).forEach((row) => pathTiles.push({ row, col: to.col }));
+    }
+    console.log(pathTiles);
+    for (let { row, col } of pathTiles) {
+        if (amphipods.some((a) => a.row === row && a.col === col)) return true;
+    }
+    return false;
+}
+
 function distance(from, to) {
     if (from.row > 1) {
         return Math.abs(from.row - 1) + distance({ row: 1, col: from.col }, to);
@@ -102,7 +133,7 @@ function distance(from, to) {
     return Math.abs(to.row - from.row) + Math.abs(to.col - from.col);
 }
 
-function getTile() {
+function getClickedTile() {
     let row = getIndex(mouseY);
     let col = getIndex(mouseX);
     let tile = grid.find((tile) => tile.row === row && tile.col === col);

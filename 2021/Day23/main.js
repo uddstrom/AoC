@@ -105,13 +105,11 @@ function checkPath(from, to) {
         );
     }
     if (from.col < to.col) {
-        // heading right
         range(from.col + 1, to.col).forEach((col) =>
             pathTiles.push({ row: 1, col })
         );
     }
     if (from.col > to.col) {
-        // heading left
         range(from.col - 1, to.col).forEach((col) =>
             pathTiles.push({ row: 1, col })
         );
@@ -119,7 +117,6 @@ function checkPath(from, to) {
     if (to.row > 1) {
         range(to.row, 1).forEach((row) => pathTiles.push({ row, col: to.col }));
     }
-    console.log(pathTiles);
     for (let { row, col } of pathTiles) {
         if (amphipods.some((a) => a.row === row && a.col === col)) return true;
     }
@@ -232,5 +229,3 @@ function Amphipod(row, col, type) {
         stroke(255);
     };
 }
-
-// Four types of amphipods live there: Amber (A), Bronze (B), Copper (C), and Desert (D).

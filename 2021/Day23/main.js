@@ -1,6 +1,6 @@
-var cols = 13;
-var rows = 7;
-var w = 50;
+var COLS = 13;
+var ROWS = 7;
+var W = 50;
 var grid = [];
 var amphipods = [];
 var corridorColor = [140, 140, 140, 255];
@@ -19,14 +19,14 @@ var amphipodEnergy = new Map([
 let energyConsumption = 0;
 
 function setup() {
-    createCanvas(cols * w, rows * w);
+    createCanvas(COLS * W, ROWS * W);
     setupTiles();
     setupAmphipods();
 }
 
 function setupTiles() {
-    rng(rows).forEach((row) => {
-        rng(cols).forEach((col) => {
+    rng(ROWS).forEach((row) => {
+        rng(COLS).forEach((col) => {
             grid.push(new Tile(row, col, isWall(row, col)));
         });
     });
@@ -69,18 +69,22 @@ function mouseClicked() {
     amphipod = amphipods.find((a) => a.active);
     if (amphipod) {
         amphipod.active = false;
-        let tile = getTile();
-        if (!tile.wall && !isNoStop(tile) && !isOccupied(tile)) {
-            if (tile.room && tile.room !== amphipod.type) {
+        let dest = getTile();
+        if (!dest.wall && !isNoStop(dest) && !isOccupied(dest)) {
+            if (amphipod.row === 1 && dest.row === 1) {
+                alert('Not allowed to move in corridor');
+            } else if (dest.room && dest.room !== amphipod.type) {
                 alert('Not allowed to enter that room');
+            } else if (dest.room && !isCleanRoom(dest)) {
+                alert('Room must only contain one type');
             } else {
                 let d = distance(
                     { row: amphipod.row, col: amphipod.col },
-                    tile
+                    dest
                 );
                 energyConsumption += d * amphipodEnergy.get(amphipod.type);
-                amphipod.row = tile.row;
-                amphipod.col = tile.col;
+                amphipod.row = dest.row;
+                amphipod.col = dest.col;
             }
         }
     } else {
@@ -106,13 +110,13 @@ function getTile() {
 }
 
 function getIndex(coord) {
-    return Math.floor(coord / w);
+    return Math.floor(coord / W);
 }
 
 function isOccupied(tile) {
     for (let a of amphipods) {
         if (tile.row === a.row && tile.col === a.col) {
-            alert("Can't go - occupied");
+            // alert("Can't go - occupied");
             return true;
         }
     }
@@ -136,11 +140,18 @@ function isWall(row, col) {
 }
 
 function isRoom(row, col) {
-    if (row < 2 || row === rows - 1) return false;
+    if (row < 2 || row === ROWS - 1) return false;
     if (col === 3) return 'A';
     if (col === 5) return 'B';
     if (col === 7) return 'C';
     if (col === 9) return 'D';
+}
+
+function isCleanRoom(tile) {
+    for (let a of amphipods) {
+        if (a.col === tile.col && a.type !== tile.room) return false;
+    }
+    return true;
 }
 
 function Tile(row, col, wall = false) {
@@ -150,8 +161,8 @@ function Tile(row, col, wall = false) {
     this.room = isRoom(row, col);
 
     this.draw = function () {
-        let x = this.col * w;
-        let y = this.row * w;
+        let x = this.col * W;
+        let y = this.row * W;
         let color = amphipodColors.get(this.room);
         if (color === undefined) {
             // corridor
@@ -165,7 +176,7 @@ function Tile(row, col, wall = false) {
         if (this.wall) fill(30);
         else fill(...color);
 
-        rect(x, y, w, w);
+        rect(x, y, W, W);
     };
 }
 
@@ -177,16 +188,16 @@ function Amphipod(row, col, type) {
 
     this.draw = function () {
         let color = amphipodColors.get(this.type).slice();
-        let x = this.col * w;
-        let y = this.row * w;
+        let x = this.col * W;
+        let y = this.row * W;
         colorMode(RGB, 255);
         if (this.active) fill(...color.map((v) => v + 80));
         else fill(...color);
-        rect(x, y, w, w);
+        rect(x, y, W, W);
         noStroke();
         fill(255, 255, 255, 200);
         textSize(32);
-        text(this.type, x + w / 2 - 10, y + w / 2 + 10);
+        text(this.type, x + W / 2 - 10, y + W / 2 + 10);
         stroke(255);
     };
 }

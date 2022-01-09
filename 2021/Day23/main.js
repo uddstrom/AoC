@@ -1,3 +1,4 @@
+var OPTIMIZED_ENERGY_CONSUMPTION = 48759;
 var COLS = 13;
 var ROWS = 7;
 var W = 50;
@@ -73,9 +74,9 @@ function mouseClicked() {
         if (!dest.wall && !isNoStop(dest) && !isOccupied(dest)) {
             if (amphipod.row === 1 && dest.row === 1) {
                 alert('Not allowed to move in corridor');
-            } else if (dest.room && dest.room !== amphipod.type) {
+            } else if (dest.roomType && dest.roomType !== amphipod.type) {
                 alert('Not allowed to enter that room');
-            } else if (dest.room && !isCleanRoom(dest)) {
+            } else if (dest.roomType && !isCleanRoom(dest)) {
                 alert('Room must only contain one type');
             } else if (checkPath(amphipod, dest)) {
                 alert('Other amphipod(s) blocking path');
@@ -87,6 +88,7 @@ function mouseClicked() {
                 energyConsumption += d * amphipodEnergy.get(amphipod.type);
                 amphipod.row = dest.row;
                 amphipod.col = dest.col;
+                evalState();
             }
         }
     } else {
@@ -94,6 +96,21 @@ function mouseClicked() {
         let col = getIndex(mouseX);
         let amphipod = amphipods.find((a) => a.row === row && a.col === col);
         if (amphipod) amphipod.active = true;
+    }
+}
+
+function evalState() {
+    function inCorrectRoom({ row, col, type }) {
+        return (
+            grid.find((tile) => tile.col === col && tile.row === row)
+                .roomType === type
+        );
+    }
+
+    if (amphipods.every(inCorrectRoom)) {
+        if (energyConsumption > OPTIMIZED_ENERGY_CONSUMPTION)
+            alert('Great job! But you can do better!');
+        else alert('Perfect! Optimal solution found.');
     }
 }
 
@@ -144,7 +161,6 @@ function getIndex(coord) {
 function isOccupied(tile) {
     for (let a of amphipods) {
         if (tile.row === a.row && tile.col === a.col) {
-            // alert("Can't go - occupied");
             return true;
         }
     }
@@ -167,7 +183,7 @@ function isWall(row, col) {
     return false;
 }
 
-function isRoom(row, col) {
+function getRoomType(row, col) {
     if (row < 2 || row === ROWS - 1) return false;
     if (col === 3) return 'A';
     if (col === 5) return 'B';
@@ -177,7 +193,7 @@ function isRoom(row, col) {
 
 function isCleanRoom(tile) {
     for (let a of amphipods) {
-        if (a.col === tile.col && a.type !== tile.room) return false;
+        if (a.col === tile.col && a.type !== tile.roomType) return false;
     }
     return true;
 }
@@ -186,12 +202,12 @@ function Tile(row, col, wall = false) {
     this.row = row;
     this.col = col;
     this.wall = wall;
-    this.room = isRoom(row, col);
+    this.roomType = getRoomType(row, col);
 
     this.draw = function () {
         let x = this.col * W;
         let y = this.row * W;
-        let color = amphipodColors.get(this.room);
+        let color = amphipodColors.get(this.roomType);
         if (color === undefined) {
             // corridor
             color = corridorColor;

@@ -78,7 +78,7 @@ export function generatePermutations(array) {
 
     function recursiveHeap(k, A, S) {
         if (k === 1) {
-            S.add(A.join(''));
+            S.add(A.join(','));
         } else {
             recursiveHeap(k - 1, A, S);
             for (var i = 0; i < k - 1; i++) {
@@ -91,4 +91,8 @@ export function generatePermutations(array) {
     let S = new Set();
     recursiveHeap(array.length, array.slice(), S);
     return S;
+}
+
+export function intersect(array1, array2) {
+    return array1.filter((value) => array2.includes(value));
 }

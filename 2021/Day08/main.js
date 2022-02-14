@@ -1,5 +1,5 @@
 import { generatePermutations, getData, getPath, sum } from '../lib/utils.js';
-import {decodeWithDeduction} from './deduction.js';
+import { decodeWithDeduction } from './deduction.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
@@ -13,7 +13,11 @@ function parser(input) {
         }));
 }
 
-let _wireConfigurations = generatePermutations(['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+let _wireConfigurations = new Set(
+    [...generatePermutations(['a', 'b', 'c', 'd', 'e', 'f', 'g'])].map((p) =>
+        p.replaceAll(',', '')
+    )
+);
 let _segmentsMap = new Map([
     ['012456', 0],
     ['25', 1], //       0000
@@ -53,7 +57,6 @@ function decode({ signals, output }) {
     }
 }
 
-
 function main() {
     let entries = getData(PUZZLE_INPUT_PATH)(parser);
 
@@ -62,9 +65,17 @@ function main() {
 
     console.log('Part 1:', sum(entries.map(countNumbers)));
     let start = Date.now();
-    console.log(`Part 2: ${sum(entries.map(decode))} (using brute force in ${Date.now() - start} ms)`);
+    console.log(
+        `Part 2: ${sum(entries.map(decode))} (using brute force in ${
+            Date.now() - start
+        } ms)`
+    );
     start = Date.now();
-    console.log(`Part 2: ${sum(entries.map(decodeWithDeduction))} (using deduction in ${Date.now() - start} ms)`);
+    console.log(
+        `Part 2: ${sum(entries.map(decodeWithDeduction))} (using deduction in ${
+            Date.now() - start
+        } ms)`
+    );
 }
 
 main();

@@ -62,3 +62,5 @@ function getSteps(map) {
 
 let map = getData(PUZZLE_INPUT_PATH)(parser);
 console.log('Part 1:', getSteps(map));
+
+// Just some dummy changes to commit

@@ -11,6 +11,6 @@ function top3(arr) {
     return arr.sort(descending).slice(0, 3);
 }
 
-var data = getData(PUZZLE_INPUT_PATH)(parser);
+var data = getData(PUZZLE_INPUT_PATH)(parser); // [[1,2,3], [4,5], ...]
 console.log('Part 1:', max(data.map(sum)));
 console.log('Part 2:', sum(top3(data.map(sum))));

@@ -16,3 +16,7 @@ export function getPath(url) {
 export function pow(base) {
     return (exp) => Math.pow(base, exp);
 }
+
+export function sum(arr) {
+    return arr.reduce((acc, curr) => acc + curr, 0);
+}

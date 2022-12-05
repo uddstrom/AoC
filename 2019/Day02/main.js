@@ -1,4 +1,4 @@
-import { getData, getPath, sum } from '../lib/utils.js';
+import { getData, getPath } from '../lib/utils.js';
 import IntcodeComputer from './IntcodeComputer.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;

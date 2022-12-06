@@ -14,5 +14,5 @@ function findMarker(stream, size, marker = size) {
 }
 
 var data = getData(PUZZLE_INPUT_PATH)(parser);
-console.log('Part 1:', findMarker(data, 40));
+console.log('Part 1:', findMarker(data, 4));
 console.log('Part 2:', findMarker(data, 14));

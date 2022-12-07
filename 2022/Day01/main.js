@@ -1,4 +1,4 @@
-import { getData, getPath, max, sum } from '../lib/utils.js';
+import { descending, getData, getPath, max, sum } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
@@ -7,7 +7,6 @@ function parser(input) {
 }
 
 function top3(arr) {
-    var descending = (a, b) => b - a;
     return arr.sort(descending).slice(0, 3);
 }
 

@@ -6,7 +6,7 @@ function parser(input) {
     return input.split('\n').map((row) => row.split('').map(Number));
 }
 
-function getTreesInEachDirection(map, x, y) {
+function treesInEachDirection(map, x, y) {
     function getTrees(x, y, [dx, dy], trees = []) {
         var inMap = (x, y) =>
             y >= 0 && y < map.length ? x >= 0 && x < map[y].length : false;
@@ -25,7 +25,7 @@ function getTreesInEachDirection(map, x, y) {
 function countVisible(map) {
     function isVisible(x, y) {
         var isSmaller = (t) => t < map[y][x];
-        return getTreesInEachDirection(map, x, y).some(
+        return treesInEachDirection(map, x, y).some(
             (T) => T.length === 0 || T.every(isSmaller)
         );
     }
@@ -40,13 +40,12 @@ function countVisible(map) {
 
 function getHighestScenicScore(map) {
     function scenicScore(x, y) {
-        var trees = getTreesInEachDirection(map, x, y);
         var isTaller = (tree) => tree >= map[y][x];
         var toScore = (T) => {
             var viewingDistance = T.findIndex(isTaller);
             return viewingDistance === -1 ? T.length : viewingDistance + 1;
         };
-        return product(trees.map(toScore));
+        return product(treesInEachDirection(map, x, y).map(toScore));
     }
     return max(map.flatMap((row, y) => row.map((_, x) => scenicScore(x, y))));
 }

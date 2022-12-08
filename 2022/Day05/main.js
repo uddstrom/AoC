@@ -13,7 +13,7 @@ function parser(input) {
     stacks = stacks.map((pile) => pile.reverse());
 
     moves = moves.split('\n').map((row) => {
-        var R = row.split(' ');
+        let R = row.split(' ');
         return {
             n: Number(R[1]),
             from: Number(R[3]),
@@ -25,7 +25,7 @@ function parser(input) {
 
 function reArrange9000(stacks, moves) {
     function move({ n, from, to }) {
-        for (var i = 0; i < n; i++) {
+        for (let i = 0; i < n; i++) {
             stacks[to - 1].push(stacks[from - 1].pop());
         }
     }
@@ -36,10 +36,10 @@ function reArrange9000(stacks, moves) {
 function reArrange9001(stacks, moves) {
     function move({ n, from, to }) {
         var tempStack = [];
-        for (var i = 0; i < n; i++) {
+        for (let i = 0; i < n; i++) {
             tempStack.push(stacks[from - 1].pop());
         }
-        for (var i = 0; i < n; i++) {
+        for (let i = 0; i < n; i++) {
             stacks[to - 1].push(tempStack.pop());
         }
     }

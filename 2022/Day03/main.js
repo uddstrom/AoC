@@ -19,7 +19,7 @@ function toPrio(char) {
 
 function findBadges(data) {
     var arr = [];
-    for (var i = 0; i < data.length; i += 3) {
+    for (let i = 0; i < data.length; i += 3) {
         arr.push(findBadge(data[i], data[i + 1], data[i + 2]));
     }
     return sum(arr.map(toPrio));

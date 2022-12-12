@@ -10,41 +10,33 @@ function parser(input) {
 }
 
 function draw(CRT) {
-    console.log(CRT.slice(0,40).join(''));
-    console.log(CRT.slice(40,80).join(''));
-    console.log(CRT.slice(80,120).join(''));
-    console.log(CRT.slice(120,160).join(''));
-    console.log(CRT.slice(160,200).join(''));
-    console.log(CRT.slice(200,240).join(''));
+    return [0, 40, 80, 120, 160, 200].map((i) => CRT.slice(i, i + 40).join(''));
+}
+
+function runProgram(program) {
+    var stack = [...program];
+    var measurePoints = [20, 60, 100, 140, 180, 220];
+
+    function updateCrt(CRT, cycle, x) {
+        var spritePos = cycle % 40;
+        return spritePos >= x - 1 && spritePos <= x + 1
+            ? CRT.map((c, i) => (i === cycle ? '#' : c))
+            : [...CRT];
+    }
+
+    function process(CRT, signalStrength = 0, cycle = 1, x = 1, val = NaN) {
+        if (stack.length <= 0) return [signalStrength, CRT];
+        signalStrength += measurePoints.includes(cycle) ? x * cycle : 0;
+        var updCRT = updateCrt(CRT, cycle - 1, x);
+        return Number.isNaN(val) // are we in an 'adding' cycle?
+            ? process(updCRT, signalStrength, cycle + 1, x, stack.shift()) // no, get new instruction
+            : process(updCRT, signalStrength, cycle + 1, x + val); // yes, add the value to x
+    }
+    return process(rng(240).fill(' '));
 }
 
 var data = getData(PUZZLE_INPUT_PATH)(parser); // [1, 2, NaN, 3, 4, ...]
+var [measures, CRT] = runProgram(data);
 
-var measurPoints = [20, 60, 100, 140, 180, 220];
-var measures = [];
-var cycle = 0;
-var x = 1;
-var adding = false;
-var CRT = rng(6 * 40).map((_) => ' ');
-var val;
-while (data.length > 0) {
-    if (measurPoints.includes(cycle+1)) {
-        measures.push(x * (cycle+1));
-    }
-    var spritePos = (cycle) % 40;
-    if (spritePos >= x-1 && spritePos <= x+1) {
-        CRT[cycle] = '#';
-    }
-    if (adding) {
-        x += val;
-        adding = false;
-    } else {
-        val = data.shift();
-        if (!Number.isNaN(val)) 
-            adding = true;
-    }
-    cycle++;
-}
-
-console.log('Part 1:', sum(measures));
-console.log('Part 2:'); draw(CRT);
+console.log('Part 1:', measures);
+console.log('Part 2:', draw(CRT));

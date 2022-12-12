@@ -25,8 +25,8 @@ function ropeSimulation(data) {
         var [tr, tc] = rope[i]; // 'tail' row/col
         var dr = Math.abs(hr - tr);
         var dc = Math.abs(hc - tc);
-        var rstep = hr > tr ? 1 : -1;
-        var cstep = hc > tc ? 1 : -1;
+        var rstep = Math.sign(hr - tr);
+        var cstep = Math.sign(hc - tc);
 
         if (dr > 1 && dc > 1) rope[i] = [tr + rstep, tc + cstep];
         else if (dr > 1) rope[i] = [tr + rstep, hc];

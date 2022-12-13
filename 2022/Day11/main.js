@@ -9,14 +9,11 @@ function parser(input) {
 function parseMonkey(monkeyString) {
     var grabMonkeyNumber = (monkeyRow) => BigInt(monkeyRow.match(/(\d+)/g)[0]);
     var monkeyRows = monkeyString.split('\n');
-    var [val, operator, ..._] = monkeyRows[2].split(' ').reverse();
+    var [value, operator, ..._] = monkeyRows[2].split(' ').reverse();
     return {
         id: grabMonkeyNumber(monkeyRows[0]),
         items: monkeyRows[1].match(/(\d{2})/g).map(BigInt),
-        operation: {
-            operator,
-            value: val === 'old' ? null : BigInt(val),
-        },
+        operation: { operator, value },
         testValue: grabMonkeyNumber(monkeyRows[3]),
         ifTrue: grabMonkeyNumber(monkeyRows[4]),
         ifFalse: grabMonkeyNumber(monkeyRows[5]),
@@ -24,7 +21,7 @@ function parseMonkey(monkeyString) {
     };
 }
 
-function calculateMonkeyBusinessLevel(_monkeys, rounds, inspect) {
+function monkeyBusinessLevel(_monkeys, rounds, inspect) {
     var monkeys = structuredClone(_monkeys);
     var lcd = product(monkeys.map((m) => m.testValue));
     var test = (item, testValue) => item % testValue === 0n;
@@ -53,14 +50,15 @@ function calculateMonkeyBusinessLevel(_monkeys, rounds, inspect) {
 
 var data = getData(PUZZLE_INPUT_PATH)(parser);
 
-var worryFuncs = {
-    '+': (item, value) => (value === null ? item + item : item + value),
-    '*': (item, value) => (value === null ? item * item : item * value),
-};
-var p1Inspect = (item, { operator, value }) =>
-    worryFuncs[operator](item, value) / 3n;
-var p2Inspect = (item, { operator, value }) =>
-    worryFuncs[operator](item, value);
+function createInspect(divider = 1n) {
+    var adjustWorryLevel = {
+        '+': (item, val) => (val === 'old' ? item + item : item + BigInt(val)),
+        '*': (item, val) => (val === 'old' ? item * item : item * BigInt(val)),
+    };
+    return function inspect(item, { operator, value }) {
+        return adjustWorryLevel[operator](item, value) / divider;
+    };
+}
 
-console.log('Part 1:', calculateMonkeyBusinessLevel(data, 20, p1Inspect));
-console.log('Part 2:', calculateMonkeyBusinessLevel(data, 10000, p2Inspect));
+console.log('Part 1:', monkeyBusinessLevel(data, 20, createInspect(3n)));
+console.log('Part 2:', monkeyBusinessLevel(data, 10000, createInspect()));

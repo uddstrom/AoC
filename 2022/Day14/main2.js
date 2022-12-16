@@ -6,31 +6,18 @@ var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 var sandsource;
 
 function parser(input) {
-    var scan = input
-        .split('\n')
-        .map((row) =>
-            row.split(' -> ').map((cord) => cord.split(',').map(Number))
-        );
-
-    /* scan looks like this:
-    [
-        [ [ 498, 4 ], [ 498, 6 ], [ 496, 6 ] ],
-        [ [ 503, 4 ], [ 502, 4 ], [ 502, 9 ], [ 494, 9 ] ]
-    ]
-    */
+    var scan = input.split('\n').map((row) => row.split(' -> ').map((cord) => cord.split(',').map(Number)));
 
     var maxR = max(scan.map((line) => line.map(([c, r]) => r)).flat());
     var minC = min(scan.map((line) => line.map(([c, r]) => c)).flat());
-    var maxC = max(scan.map((line) => line.map(([c, r]) => c)).flat());
     var map = matrix(maxR + 3, maxR + 3, '.');
-    map[map.length - 1] = rng(map[0].length).map(_ => '#');
+    map[map.length - 1] = rng(map[0].length).map((_) => '#');
 
     var translate = ([r, c]) => [r, c - minC];
     scan.map((line) => lineToCoords(line))
         .flat()
         .map(translate)
         .forEach(([row, col]) => (map[row][col] = '#'));
-
 
     sandsource = translate([0, 500]);
     var [sr, sc] = sandsource;
@@ -61,10 +48,20 @@ function render(matrix) {
 }
 
 function dropSand(map, [r, c]) {
-    var inMap = ([r, c]) => r >= 0 && r < map.length ? c >= 0 && c < map[r].length : false;
+    var inMap = ([r, c]) => (r >= 0 && r < map.length ? c >= 0 && c < map[r].length : false);
     var notBlocked = ([r, c]) => !inMap([r, c]) || map[r][c] === '.';
+
+    if (r === map.length - 2) {
+        // at the bottom
+        map[r][c] = 'o';
+        return map;
+    }
     // down, downleft, downright
-    var next = [[r + 1, c], [r + 1, c - 1], [r + 1, c + 1]].find(notBlocked);
+    var next = [
+        [r + 1, c],
+        [r + 1, c - 1],
+        [r + 1, c + 1],
+    ].find(notBlocked);
     if (next === undefined) {
         // at rest, update map
         map[r][c] = 'o';
@@ -77,33 +74,31 @@ function dropSand(map, [r, c]) {
             map = extendRight(map);
         } else if (nc < 0) {
             map = extendLeft(map);
+            next = [nr, 0];
         }
-    } 
+    }
     return dropSand(map, next);
 }
 
 function extendLeft(map) {
-    map.forEach(row => row.unshift('.'));
+    map.forEach((row) => row.unshift('.'));
     map[map.length - 1][0] = '#';
     return map;
 }
 
 function extendRight(map) {
-    map.forEach(row => row.push('.'));
+    map.forEach((row) => row.push('.'));
     map[map.length - 1][map[0].length - 1] = '#';
     return map;
 }
 
 var map = getData(PUZZLE_INPUT_PATH)(parser);
-
 var mapFullWithSand = structuredClone(map);
 while (true) {
     mapFullWithSand = dropSand(mapFullWithSand, sandsource);
     sandsource = [0, mapFullWithSand[0].indexOf('+')];
-    if (mapFullWithSand[1][sandsource[1]] === 'o') break;
+    if (sandsource[1] === -1) break; // if the + is overvritten with sand
 }
 
 render(mapFullWithSand);
-
-console.log('Part 1:', count('o', mapFullWithSand.flat()));
-// console.log('Part 2:');
+console.log('Part 2:', count('o', mapFullWithSand.flat()));

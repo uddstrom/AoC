@@ -29,7 +29,7 @@ function dijk(nodes, start, goal) {
     openSet.push(start);
 
     while (!openSet.empty()) {
-        var current = openSet.pop();
+        let current = openSet.pop();
         visited.push(current);
 
         if (current.time === goal.time) {
@@ -42,7 +42,7 @@ function dijk(nodes, start, goal) {
             let currentFlowRate = nodes.get(current.location.id).flowRate;
             if (!current.location.isOpen && currentFlowRate > 0) {
                 // 2. valve not and has flowRate. open valve
-                var newState = {
+                let newState = {
                     time: current.time + 1,
                     location: {
                         id: current.location.id,
@@ -56,9 +56,9 @@ function dijk(nodes, start, goal) {
             }
             // 3. move to next location
             // explore edges
-            var edges = nodes.get(current.location.id).edgesTo;
+            let edges = nodes.get(current.location.id).edgesTo;
             edges.forEach((edge) => {
-                var newState = {
+                let newState = {
                     time: current.time + 1,
                     location: {
                         id: edge,
@@ -70,7 +70,7 @@ function dijk(nodes, start, goal) {
                 };
 
                 // ignore new state if visited already
-                if (!visited.get(newState)) {
+                if (!visited.includes(newState)) {
                     openSet.push(newState);
                 }
             });

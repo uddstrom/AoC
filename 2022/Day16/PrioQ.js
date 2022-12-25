@@ -18,19 +18,15 @@ export class PrioQ {
     pop() {
         // remove the state with highest total release
         var candiate = { totalRelease: -1 };
-        var cKey;
+        var candidateKey;
         this.queue.forEach((state, key) => {
             if (state.totalRelease > candiate.totalRelease) {
                 candiate = state;
-                cKey = key;
+                candidateKey = key;
             }
         });
-        this.queue.delete(cKey);
+        this.queue.delete(candidateKey);
         return candiate;
-    }
-
-    get(state) {
-        return this.queue.get(this.getId(state));
     }
 
     empty() {

@@ -6,16 +6,14 @@ var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 function parser(input) {
     var nodes = new Map();
     input.split('\n').forEach((row) => {
-        let captures = row
-            .match(
-                /Valve (\w{2}) has flow rate=(\d+); tunnel[s]? lead[s]? to valve[s]? (.+)/
-            )
-            .slice(1);
+        var { valve, rate, edges } = row.match(
+            /Valve (?<valve>\w{2}) has flow rate=(?<rate>\d+); tunnels? leads? to valves? (?<edges>.+)/
+        ).groups;
 
-        nodes.set(captures[0], {
-            id: captures[0],
-            flowRate: Number(captures[1]),
-            edgesTo: captures[2].split(', '),
+        nodes.set(valve, {
+            id: valve,
+            flowRate: Number(rate),
+            edgesTo: edges.split(', '),
         });
     });
     return nodes;

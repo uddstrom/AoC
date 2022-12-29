@@ -4,7 +4,9 @@ export class PrioQ {
     }
 
     getId(state) {
-        return `${state.location.id},${state.location.isOpen},${state.flowRate},${state.totalRelease}`;
+        return `${state.location},${state.openValves.includes(
+            state.location
+        )},${state.flowRate},${state.totalRelease}`;
     }
 
     includes(state) {

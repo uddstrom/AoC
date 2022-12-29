@@ -34,61 +34,53 @@ function dijk(nodes, start, goal) {
             if (current.totalRelease > maxRelease) {
                 maxRelease = current.totalRelease;
             }
-        } else {
-            // construct new state
-            // three options:
-            let currentFlowRate = nodes.get(current.location.id).flowRate;
-            if (!current.location.isOpen && currentFlowRate > 0) {
-                // 2. valve not and has flowRate. open valve
-                let newState = {
-                    time: current.time + 1,
-                    location: {
-                        id: current.location.id,
-                        isOpen: true,
-                    },
-                    flowRate: current.flowRate + currentFlowRate,
-                    totalRelease: current.totalRelease + current.flowRate,
-                    previous: current,
-                };
+            continue;
+        }
+        // construct new states
+        let currentFlowRate = nodes.get(current.location).flowRate;
+        if (
+            !current.openValves.includes(current.location) &&
+            currentFlowRate > 0
+        ) {
+            // valve not open and has flowRate. open valve
+            let newState = {
+                time: current.time + 1,
+                location: current.location,
+                flowRate: current.flowRate + currentFlowRate,
+                totalRelease: current.totalRelease + current.flowRate,
+                openValves: [...current.openValves, current.location],
+                previous: current,
+            };
+            openSet.push(newState);
+        }
+        // explore edges
+        let edges = nodes.get(current.location).edgesTo;
+        edges.forEach((edge) => {
+            let newState = {
+                time: current.time + 1,
+                location: edge,
+                flowRate: current.flowRate,
+                totalRelease: current.totalRelease + current.flowRate,
+                openValves: [...current.openValves],
+                previous: current,
+            };
+
+            // ignore new state if visited already
+            if (!visited.includes(newState)) {
                 openSet.push(newState);
             }
-            // 3. move to next location
-            // explore edges
-            let edges = nodes.get(current.location.id).edgesTo;
-            edges.forEach((edge) => {
-                let newState = {
-                    time: current.time + 1,
-                    location: {
-                        id: edge,
-                        isOpen: hasBeenOpened(edge, current),
-                    },
-                    flowRate: current.flowRate,
-                    totalRelease: current.totalRelease + current.flowRate,
-                    previous: current,
-                };
-
-                // ignore new state if visited already
-                if (!visited.includes(newState)) {
-                    openSet.push(newState);
-                }
-            });
-        }
+        });
     }
 
     return maxRelease;
-}
-
-function hasBeenOpened(id, current) {
-    if (current.location.id === id && current.location.isOpen) return true;
-    if (!current.previous) return false;
-    return hasBeenOpened(id, current.previous);
 }
 
 var nodes = getData(PUZZLE_INPUT_PATH)(parser);
 
 var start = {
     time: 0,
-    location: { id: 'AA', isOpen: false },
+    location: 'AA',
+    openValves: [],
     flowRate: 0,
     totalRelease: 0,
 };

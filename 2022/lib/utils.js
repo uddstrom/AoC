@@ -99,3 +99,4 @@ export function intersect(array1, array2) {
 
 export var ascending = (a, b) => a - b;
 export var descending = (a, b) => b - a;
+export var triangularNumber = (n) => (n * (n + 1)) / 2;

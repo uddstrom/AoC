@@ -2,6 +2,7 @@ import {
     getData,
     getPath,
     product,
+    max,
     sum,
     triangularNumber,
 } from '../lib/utils.js';
@@ -26,10 +27,8 @@ function parser(input) {
     return blueprints;
 }
 
-function getId(state) {
-    return `${
-        state.time
-    };${state.robots.toString()};${state.minerals.toString()}`;
+function getId({ time, robots, minerals }) {
+    return `${time};${robots.toString()};${minerals.toString()}`;
 }
 
 function dfs(blueprint, start) {
@@ -50,8 +49,6 @@ function dfs(blueprint, start) {
             continue;
         }
 
-        // construct new states
-
         let options = mineOptions(blueprint, current);
         options.forEach((option) => {
             let newState = {
@@ -61,17 +58,16 @@ function dfs(blueprint, start) {
                 previous: current,
             };
 
-            // can this state outperforme current best?
-            if (
+            var potential =
                 newState.minerals[3] +
-                    newState.robots[3] * newState.time +
-                    triangularNumber(newState.time - 1) >
-                maxGeode.minerals[3]
+                newState.robots[3] * newState.time +
+                triangularNumber(newState.time - 1);
+
+            if (
+                potential > maxGeode.minerals[3] &&
+                !visited.has(getId(newState))
             ) {
-                // ignore new state if visited already
-                if (!visited.has(getId(newState))) {
-                    openSet.push(newState);
-                }
+                openSet.push(newState);
             }
         });
     }
@@ -79,138 +75,118 @@ function dfs(blueprint, start) {
     return maxGeode.minerals[3];
 }
 
-function mineOptions(bp, { robots, minerals }) {
-    var options = build(bp, robots, minerals)
-        .map((fn) => fn())
-        .filter((state) => state !== undefined);
+function mineOptions(bp, { time, robots, minerals }) {
+    var options = robotFactories(bp, robots, minerals)
+        .map((factory) => factory())
+        .filter((option) => option !== undefined);
     options.push(collect(robots, minerals));
-    return options;
+    return options.map((o) => optimize(bp, o, time));
 }
 
-function build(blueprint, robots, minerals) {
-    var [ore_robots, clay_robots, obsidian_robots, geode_robots] = robots;
+function optimize(blueprint, { robots, minerals }, time) {
+    // no need to have more minerals than we have time to spend
+    var [ore, clay, obsidian, geode] = minerals;
+    var [r1, r2, r3, r4] = robots;
+
+    var maxOre = max([
+        blueprint.geode_robot[0],
+        blueprint.obsidian_robot[0],
+        blueprint.clay_robot,
+        blueprint.ore_robot,
+    ]);
+    if (ore > maxOre * time) ore = maxOre * time;
+    if (clay > blueprint.obsidian_robot[1] * time)
+        clay = blueprint.obsidian_robot[1] * time;
+    if (obsidian > blueprint.geode_robot[1] * time)
+        obsidian = blueprint.geode_robot[1] * time;
+
+    // no need to have more robots than you can spend each minute
+    if (r1 > maxOre) r1 = maxOre;
+    if (r2 > blueprint.obsidian_robot[1]) r2 = blueprint.obsidian_robot[1];
+    if (r3 > blueprint.geode_robot[1]) r3 = blueprint.geode_robot[1];
+
+    return {
+        robots: [r1, r2, r3, r4],
+        minerals: [ore, clay, obsidian, geode],
+    };
+}
+
+function robotFactories(bp, robots, minerals) {
+    var [r1, r2, r3, r4] = robots;
     var [ore, clay, obsidian, geode] = minerals;
 
-    // Try build geode robot
-    function geodeRobot() {
-        if (
-            ore >= blueprint.geode_robot[0] &&
-            obsidian >= blueprint.geode_robot[1]
-        ) {
-            // Can build geode robot
+    function buildGeodeRobot() {
+        if (ore >= bp.geode_robot[0] && obsidian >= bp.geode_robot[1]) {
             return {
-                robots: [
-                    ore_robots,
-                    clay_robots,
-                    obsidian_robots,
-                    geode_robots + 1,
-                ],
+                robots: [r1, r2, r3, r4 + 1],
                 minerals: [
-                    ore + ore_robots - blueprint.geode_robot[0],
-                    clay + clay_robots,
-                    obsidian + obsidian_robots - blueprint.geode_robot[1],
-                    geode + geode_robots,
+                    ore + r1 - bp.geode_robot[0],
+                    clay + r2,
+                    obsidian + r3 - bp.geode_robot[1],
+                    geode + r4,
                 ],
             };
         }
     }
 
-    function obsidianRobot() {
-        // Try build obsidian robot
-        if (
-            ore >= blueprint.obsidian_robot[0] &&
-            clay >= blueprint.obsidian_robot[1]
-        ) {
-            // Can build obsidian robot
+    function buildObsidianRobot() {
+        if (ore >= bp.obsidian_robot[0] && clay >= bp.obsidian_robot[1]) {
             return {
-                robots: [
-                    ore_robots,
-                    clay_robots,
-                    obsidian_robots + 1,
-                    geode_robots,
-                ],
+                robots: [r1, r2, r3 + 1, r4],
                 minerals: [
-                    ore + ore_robots - blueprint.obsidian_robot[0],
-                    clay + clay_robots - blueprint.obsidian_robot[1],
-                    obsidian + obsidian_robots,
-                    geode + geode_robots,
+                    ore + r1 - bp.obsidian_robot[0],
+                    clay + r2 - bp.obsidian_robot[1],
+                    obsidian + r3,
+                    geode + r4,
                 ],
             };
         }
     }
 
-    function clayRobot() {
-        // Try build clay robot
-        if (ore >= blueprint.clay_robot) {
-            // Can build clay robot
+    function buildClayRobot() {
+        if (ore >= bp.clay_robot) {
             return {
-                robots: [
-                    ore_robots,
-                    clay_robots + 1,
-                    obsidian_robots,
-                    geode_robots,
-                ],
+                robots: [r1, r2 + 1, r3, r4],
                 minerals: [
-                    ore + ore_robots - blueprint.clay_robot,
-                    clay + clay_robots,
-                    obsidian + obsidian_robots,
-                    geode + geode_robots,
+                    ore + r1 - bp.clay_robot,
+                    clay + r2,
+                    obsidian + r3,
+                    geode + r4,
                 ],
             };
         }
     }
 
-    function oreRobot() {
-        // Try build ore robot
-        if (ore >= blueprint.ore_robot) {
-            // Can build ore robot
+    function buildOreRobot() {
+        if (ore >= bp.ore_robot) {
             return {
-                robots: [
-                    ore_robots + 1,
-                    clay_robots,
-                    obsidian_robots,
-                    geode_robots,
-                ],
+                robots: [r1 + 1, r2, r3, r4],
                 minerals: [
-                    ore + ore_robots - blueprint.ore_robot,
-                    clay + clay_robots,
-                    obsidian + obsidian_robots,
-                    geode + geode_robots,
+                    ore + r1 - bp.ore_robot,
+                    clay + r2,
+                    obsidian + r3,
+                    geode + r4,
                 ],
             };
         }
     }
 
-    return [geodeRobot, obsidianRobot, clayRobot, oreRobot];
+    return [buildGeodeRobot, buildObsidianRobot, buildClayRobot, buildOreRobot];
 }
 
 function collect(robots, minerals) {
-    var [ore_robots, clay_robots, obsidian_robots, geode_robots] = robots;
+    var [r1, r2, r3, r4] = robots;
     var [ore, clay, obsidian, geode] = minerals;
 
     return {
         robots,
-        minerals: [
-            ore + ore_robots,
-            clay + clay_robots,
-            obsidian + obsidian_robots,
-            geode + geode_robots,
-        ],
+        minerals: [ore + r1, clay + r2, obsidian + r3, geode + r4],
     };
 }
 
-// function printPath(path) {
-//     if (path.previous) printPath(path.previous);
-//     console.log(
-//         `${
-//             24 - path.time
-//         }: ${path.robots.toString()}; ${path.minerals.toString()}`
-//     );
-// }
+console.log('This day will take some time (~ 3 min)');
 
 var blueprints = getData(PUZZLE_INPUT_PATH)(parser);
-
-var startTime = Date.now();
 
 var start = {
     time: 24,
@@ -218,21 +194,9 @@ var start = {
     minerals: [0, 0, 0, 0],
 };
 
-// var p1 = sum(
-//     blueprints.map((blueprint) => {
-//         console.log(`Processing blueprint ${blueprint.id}`);
-//         return blueprint.id * dfs(blueprint, start)
-//     }));
-
-// console.log('Part 1:', p1, Date.now() - startTime);
+var p1 = sum(blueprints.map((bp) => bp.id * dfs(bp, start)));
+console.log('Part 1:', p1);
 
 start.time = 32;
-
-var p2 = product(
-    blueprints.slice(0, 3).map((blueprint) => {
-        console.log(`Processing blueprint ${blueprint.id}`);
-        return blueprint.id * dfs(blueprint, start);
-    })
-);
-
+var p2 = product(blueprints.slice(0, 3).map((bp) => dfs(bp, start)));
 console.log('Part 2:', p2);

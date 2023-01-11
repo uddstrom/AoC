@@ -4,86 +4,75 @@ var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
 function parser(input) {
     var monkeyMap = new Map();
-    input.split('\n')
-        .forEach(line => {
-            let words = line.split(' ');
-            if (words.length === 2) {
-                // number-yelling monkey
-                monkeyMap.set(words[0].replace(':', ''), [Number(words[1])]);
-            } else {
-                // math operation monkey
-                // cczh: sllz + lgvd
-                monkeyMap.set(words[0].replace(':', ''), [words[1], words[2], words[3]]);
-            }
-        });
+    input.split('\n').forEach((line) => {
+        let words = line.split(' ');
+        monkeyMap.set(
+            words[0].replace(':', ''), // monkey name
+            words.length === 2 ? Number(words[1]) : [words[1], words[2], words[3]] // monkey type
+        );
+    });
     return monkeyMap;
 }
 
-var OPS = {
-    '+': (m1, m2) => m1 + m2,
-    '-': (m1, m2) => m1 - m2,
-    '*': (m1, m2) => m1 * m2,
-    '/': (m1, m2) => m1 / m2,
+var CALC = {
+    '+': (n1, n2) => n1 + n2,
+    '-': (n1, n2) => n1 - n2,
+    '*': (n1, n2) => n1 * n2,
+    '/': (n1, n2) => n1 / n2,
 };
 
 function monkeyMath(monkey, monkeys) {
-    // number-yelling monkey, yell number!
-    if (monkey.length === 1) return monkey[0];
-
+    if (typeof monkey === 'number') return monkey;
     var [m1, op, m2] = monkey;
-    
-    return OPS[op](
-        monkeyMath(monkeys.get(m1), monkeys),
-        monkeyMath(monkeys.get(m2), monkeys)
-    );
+    return CALC[op](monkeyMath(monkeys.get(m1), monkeys), monkeyMath(monkeys.get(m2), monkeys));
 }
 
-function findMonkeyNumber(root, monkeys) {
+function buildMonkeyTree(monkey, monkeys) {
+    if (typeof monkey === 'number') return monkey;
 
-    var [m1, _, m2] = root;
+    var [m1, op, m2] = monkey;
+    var left = m1 === 'humn' ? undefined : buildMonkeyTree(monkeys.get(m1), monkeys);
+    var right = m2 === 'humn' ? undefined : buildMonkeyTree(monkeys.get(m2), monkeys);
 
-    var n1 = monkeyMath2(monkeys.get(m1), monkeys);
-    var n2 = monkeyMath2(monkeys.get(m2), monkeys);
+    if (typeof left === 'number' && typeof right === 'number') {
+        return CALC[op](left, right);
+    }
 
-    console.log(n1, n2);
+    return [left, op, right];
+}
 
-    function monkeyMath2(monkey, monkeys, answer) {
-        if (monkey.length === 1) return monkey[0];
+function findMonkeyNumber(tree) {
+    var [left, _, right] = tree;
 
-        var InvOPS = {
-            '+': (m, ans) => ans - m,
-            '-': (m, ans) => ans + m,
-            '*': (m, ans) => ans / m,
-            '/': (m, ans) => ans * m,
-        };
+    return typeof right === 'number'
+        ? parseTree(left, right) // right has the answer, left is the tree with humn/undefined.
+        : parseTree(right, left); // left has the answer, right is the tree with humn/undefined.
 
-        var [m1, op, m2] = monkey;
-        if (m1 === 'humn') {
-            let m = monkeyMath2(monkeys.get(m2), monkeys);
-            let humn = InvOPS[op](m, answer);
-            console.log('you should yell', humn);
-            return undefined;
-        }
-        
-        if (m2 === 'humn') {
-            // Se upp med minus och division!
-            let m = monkeyMath2(monkeys.get(m2), monkeys);
-            let humn = InvOPS[op](m, answer);
-            console.log('you should yell', humn);
-            return undefined;
-        }
+    function parseTree(tree, ans) {
+        var [l, op, r] = tree;
+        if (l === undefined) return getL(op, ans, r);
+        if (r === undefined) return getR(op, ans, l);
+        if (typeof l === 'number') return parseTree(r, getR(op, ans, l));
+        if (typeof r === 'number') return parseTree(l, getL(op, ans, r));
+    }
 
-        return OPS[op](
-            monkeyMath2(monkeys.get(m1), monkeys),
-            monkeyMath2(monkeys.get(m2), monkeys)
-        );
+    function getL(op, ans, r) {
+        if (op === '+') return ans - r; // l + r = ans => l = ans - r
+        if (op === '-') return ans + r; // l - r = ans => l = ans + r
+        if (op === '*') return ans / r; // l * r = ans => l = ans / r
+        if (op === '/') return ans * r; // l / r = ans => l = ans * r
+    }
+
+    function getR(op, ans, l) {
+        if (op === '+') return ans - l; // l + r = ans => r = ans - l
+        if (op === '-') return l - ans; // l - r = ans => r = l - ans
+        if (op === '*') return ans / l; // l * r = ans => r = ans / l
+        if (op === '/') return l / ans; // l / r = ans => r = l / ans
     }
 }
 
 var monkeys = getData(PUZZLE_INPUT_PATH)(parser);
-
 var root = monkeys.get('root');
-console.log('Part 1:', monkeyMath(root, monkeys));
 
-//findMonkeyNumber(root, monkeys);
-//console.log('Part 2:', );
+console.log('Part 1:', monkeyMath(root, monkeys));
+console.log('Part 2:', findMonkeyNumber(buildMonkeyTree(root, monkeys)));

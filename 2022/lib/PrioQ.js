@@ -1,13 +1,9 @@
 export class PrioQ {
-    constructor(compareFn) {
+    constructor(compareFn, idFn) {
         this.queue = [];
         this.ids = new Set();
         this.compareFn = compareFn;
-    }
-
-    getId(state) {
-        var blizzards = [...state.blizzards].map((b) => `${b.r},${b.c},${b.dir}`).toString();
-        return `${state.r};${state.c};${blizzards}`;
+        this.getId = idFn;
     }
 
     includes(state) {
@@ -22,7 +18,7 @@ export class PrioQ {
 
     pop() {
         var state = this.queue.shift();
-        // this.ids.delete(this.getId(state));
+        this.ids.delete(this.getId(state));
         return state;
     }
 

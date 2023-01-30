@@ -1,6 +1,5 @@
-import { getData, getPath, rng } from '../lib/utils.js';
-import { PrioQ } from './PrioQ.js';
-import { makeGrid } from '../lib/grid.js';
+import { getData, getPath, lcm, rng } from '../lib/utils.js';
+import { PrioQ } from '../lib/PrioQ.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 var ROWS, COLS;
@@ -18,109 +17,79 @@ function parser(input) {
             if (isBlizzard(col)) blizzards.add({ r, c, dir: col });
         });
     });
-    start.blizzards = blizzards;
-    return [start, goal];
+    return [blizzards, start, goal];
 }
 
-function show([start_r, start_c], [goal_r, goal_c], blizzards) {
-    var grid = makeGrid(ROWS, COLS, '.');
-    var count = makeGrid(ROWS, COLS, 0);
-    rng(ROWS).forEach((r) => {
-        rng(COLS).forEach((c) => {
-            if (c === 0 || c === COLS - 1 || r === 0 || r === ROWS - 1) grid[r][c] = '#';
+function createBlizzSimulator(initialBlizzards) {
+    var blizzardsStates = new Map();
+    var b_start = structuredClone(initialBlizzards);
+    var b_next = new Set();
+    rng(lcm(ROWS, COLS)).forEach((n) => {
+        blizzardsStates.set(n, b_start);
+        b_start.forEach(({ r, c, dir }) => {
+            if (dir === '>') c = c === COLS - 2 ? 1 : c + 1;
+            if (dir === '<') c = c === 1 ? COLS - 2 : c - 1;
+            if (dir === '^') r = r === 1 ? ROWS - 2 : r - 1;
+            if (dir === 'v') r = r === ROWS - 2 ? 1 : r + 1;
+            b_next.add({ r, c, dir });
         });
+        b_start = b_next;
+        b_next = new Set();
     });
-    grid[start_r][start_c] = 'S';
-    grid[goal_r][goal_c] = 'G';
-    blizzards.forEach(({ r, c, dir }) => {
-        count[r][c] += 1;
-        grid[r][c] = count[r][c] > 1 ? count[r][c] : dir;
-    });
-    grid.forEach((row) => console.log(row.join('')));
-}
-
-var DIRS = [
-    [-1, 0], // N
-    [1, 0], // S
-    [0, -1], // W
-    [0, 1], // E
-];
-
-function simulate(B) {
-    var B2 = new Set();
-    B.forEach(({ r, c, dir }) => {
-        if (dir === '>') c = c === COLS - 2 ? 1 : c + 1;
-        if (dir === '<') c = c === 1 ? COLS - 2 : c - 1;
-        if (dir === '^') r = r === 1 ? ROWS - 2 : r - 1;
-        if (dir === 'v') r = r === ROWS - 2 ? 1 : r + 1;
-        B2.add({ r, c, dir });
-    });
-    return B2;
+    return (n) => blizzardsStates.get(n % blizzardsStates.size);
 }
 
 function getNeighbors(current, blizzards, start, goal) {
-    var candidates = DIRS.map(([dr, dc]) => ({
+    var candidates = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+        [0, 0],
+    ].map(([dr, dc]) => ({
         r: current.r + dr,
         c: current.c + dc,
         g: Number.MAX_SAFE_INTEGER,
     }));
-    candidates.push({
-        r: current.r,
-        c: current.c,
-        g: Number.MAX_SAFE_INTEGER,
-    });
-    candidates = candidates.filter(({ r, c }) => {
+    return candidates.filter(({ r, c }) => {
         if (r === start.r && c === start.c) return true;
         if (r === goal.r && c === goal.c) return true;
-        if (r <= 0) return false;
-        if (r >= ROWS - 1) return false;
-        if (c <= 0) return false;
-        if (c >= COLS - 1) return false;
+        if (r <= 0 || r >= ROWS - 1) return false;
+        if (c <= 0 || c >= COLS - 1) return false;
         if ([...blizzards].some((b) => r === b.r && c === b.c)) return false;
         return true;
     });
-    return candidates;
 }
 
-function aStar(start, goal) {
+function aStar(start, goal, getBlizzards) {
     var compareFn = (n1, n2) => n1.f - n2.f;
+    var idFn = (state) => `${state.r};${state.c};${state.g}`;
     var h = (n1, n2) => Math.abs(n1.r - n2.r) + Math.abs(n1.c - n2.c);
-    var openSet = new PrioQ(compareFn);
+    var openSet = new PrioQ(compareFn, idFn);
 
-    openSet.push(start);
-    start.g = 0;
     start.f = h(start, goal);
+    openSet.push(start);
 
     while (!openSet.empty()) {
         var current = openSet.pop();
-        console.log(current.g, openSet.queue.length, openSet.ids.size);
-        if (current.r === goal.r && current.c === goal.c) {
-            return current.f;
-        }
+        if (current.r === goal.r && current.c === goal.c) return current.f;
 
-        var blizzards = simulate(current.blizzards);
-        current.neighbors = getNeighbors(current, blizzards, start, goal);
-
+        current.neighbors = getNeighbors(current, getBlizzards(current.g + 1), start, goal);
         current.neighbors.forEach((neighbor) => {
-            // tentative_gScore is the distance from start to the neighbor through current
-            var tentative_gScore = current.g + 1;
-
-            if (tentative_gScore < neighbor.g) {
-                // This path to neighbor is better than any previous one. Record it!
-                neighbor.blizzards = blizzards;
-                neighbor.g = tentative_gScore;
-                neighbor.f = tentative_gScore + h(neighbor, goal);
-
-                if (!openSet.includes(neighbor)) {
-                    openSet.push(neighbor);
-                }
-            }
+            neighbor.g = current.g + 1;
+            neighbor.f = current.g + 1 + h(neighbor, goal);
+            if (!openSet.includes(neighbor)) openSet.push(neighbor);
         });
     }
 }
 
-var [start, goal] = getData(PUZZLE_INPUT_PATH)(parser);
 var startTime = Date.now();
-console.log('Part 1:', aStar(start, goal));
-console.log('Part 2:');
+var [blizzards, start, goal] = getData(PUZZLE_INPUT_PATH)(parser);
+var simulator = createBlizzSimulator(blizzards);
+var trip1 = aStar({ ...start, g: 0 }, goal, simulator);
+var trip2 = aStar({ ...goal, g: trip1 }, start, simulator);
+var trip3 = aStar({ ...start, g: trip2 }, goal, simulator);
+
+console.log('Part 1:', trip1);
+console.log('Part 2:', trip3);
 console.log('Completed in (ms):', Date.now() - startTime);

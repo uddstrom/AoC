@@ -1,26 +1,4 @@
-export class PrioQ {
-    constructor(compareFn) {
-        this.queue = [];
-        this.compareFn = compareFn;
-    }
-
-    push(node) {
-        this.queue.push(node);
-        this.queue.sort(this.compareFn);
-    }
-
-    pop() {
-        return this.queue.shift();
-    }
-
-    includes(node) {
-        return this.queue.includes(node);
-    }
-
-    empty() {
-        return this.queue.length === 0;
-    }
-}
+import { PrioQ } from './PrioQ.js';
 
 function reconstruct_path(_current) {
     var current = _current;

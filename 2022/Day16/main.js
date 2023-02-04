@@ -1,96 +1,81 @@
-import { getData, getPath } from '../lib/utils.js';
-import { PrioQ } from './PrioQ.js';
+import { getData, getPath, max } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
 function parser(input) {
-    var nodes = new Map();
+    var maps = new Map();
+    var flows = new Map();
     input.split('\n').forEach((row) => {
         var { valve, rate, edges } = row.match(
             /Valve (?<valve>\w{2}) has flow rate=(?<rate>\d+); tunnels? leads? to valves? (?<edges>.+)/
         ).groups;
 
-        nodes.set(valve, {
-            id: valve,
-            flowRate: Number(rate),
-            edgesTo: edges.split(', '),
-        });
+        maps.set(valve, edges.split(', '));
+        flows.set(valve, Number(rate));
     });
-    return nodes;
+    return [maps, flows];
 }
 
-function dijk(nodes, start, goal) {
-    var visited = new PrioQ();
-    var openSet = new PrioQ();
-    var maxRelease = 0;
+function dijk(G, start) {
+    var dist = new Map();
+    var Q = [];
 
-    openSet.push(start);
+    dist.set(start, 0);
+    Q.push(start);
 
-    while (!openSet.empty()) {
-        let current = openSet.pop();
-        visited.push(current);
-
-        if (current.time === goal.time) {
-            if (current.totalRelease > maxRelease) {
-                maxRelease = current.totalRelease;
-            }
-            continue;
-        }
-        // construct new states
-        let currentFlowRate = nodes.get(current.location).flowRate;
-        if (
-            !current.openValves.includes(current.location) &&
-            currentFlowRate > 0
-        ) {
-            // valve not open and has flowRate. open valve
-            let newState = {
-                time: current.time + 1,
-                location: current.location,
-                flowRate: current.flowRate + currentFlowRate,
-                totalRelease: current.totalRelease + current.flowRate,
-                openValves: [...current.openValves, current.location],
-                previous: current,
-            };
-            openSet.push(newState);
-        }
-        // explore edges
-        let edges = nodes.get(current.location).edgesTo;
-        edges.forEach((edge) => {
-            let newState = {
-                time: current.time + 1,
-                location: edge,
-                flowRate: current.flowRate,
-                totalRelease: current.totalRelease + current.flowRate,
-                openValves: [...current.openValves],
-                previous: current,
-            };
-
-            // ignore new state if visited already
-            if (!visited.includes(newState)) {
-                openSet.push(newState);
+    while (Q.length > 0) {
+        let current = Q.pop();
+        G.get(current).forEach((neighbor) => {
+            let tentative_gScore = dist.get(current) + 1;
+            if (!dist.has(neighbor) || tentative_gScore < dist.get(neighbor)) {
+                dist.set(neighbor, tentative_gScore);
+                Q.push(neighbor);
             }
         });
     }
 
-    return maxRelease;
+    return dist;
 }
 
-var nodes = getData(PUZZLE_INPUT_PATH)(parser);
+function solve(pos, time, opened, elephants = 0) {
+    if (time <= 0) {
+        return elephants > 0 ? solve('AA', 26, [...opened], 0) : 0;
+    }
 
-var start = {
-    time: 0,
-    location: 'AA',
-    openValves: [],
-    flowRate: 0,
-    totalRelease: 0,
-};
+    var key = `${pos};${time};${opened.join()};${elephants}`;
+    if (cache.has(key)) return cache.get(key);
 
-var startTime = Date.now();
-var goal = { time: 30 };
-var maxRelease = dijk(nodes, start, goal);
-var endTime = Date.now();
-var time = (endTime - startTime) / 1000;
+    var scores = [];
+    var distMap = distances.get(pos);
+    for (let next of distMap.keys()) {
+        if (pos !== next && flows.get(next) > 0 && !opened.includes(next)) {
+            scores.push(
+                solve(next, time - distMap.get(next), [...opened], elephants)
+            );
+        }
+    }
 
-console.log('Part 1:', maxRelease, time);
+    var flow = flows.get(pos);
+    if (flow > 0 && !opened.includes(pos)) {
+        scores.push(
+            flow * (time - 1) +
+                solve(pos, time - 1, [...opened, pos].sort(), elephants)
+        );
+    }
 
-console.log('Part 2:');
+    var score = scores.length ? max(scores) : 0;
+    cache.set(key, score);
+
+    return score;
+}
+
+var [maps, flows] = getData(PUZZLE_INPUT_PATH)(parser);
+var distances = new Map();
+var cache = new Map();
+var start = Date.now();
+
+[...maps.keys()].forEach((n) => distances.set(n, dijk(maps, n)));
+
+console.log('Part 1:', solve('AA', 30, [], 0));
+console.log('Part 2:', solve('AA', 26, [], 1));
+console.log(`Finished in ${Date.now() - start} ms.`);

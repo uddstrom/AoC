@@ -13,12 +13,10 @@ function trigger(polymer) {
         let p1 = pol[i];
         let p2 = pol[i + 1];
         if (p1 !== p2 && p1.toLowerCase() === p2.toLowerCase()) {
-            // reaction!
             pol.splice(i, 2);
-            i = i - 2 < 0 ? 0 : i - 2;
-        } else {
+            i = i - 1 < 0 ? 0 : i - 1;
+        } else
             i++;
-        }
     }
     return pol.length;
 }

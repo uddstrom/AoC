@@ -8,13 +8,16 @@ function parser(input) {
 
 function trigger(polymer) {
     var pol = [...polymer];
-    for (let i = 1; i < pol.length; i++) {
-        let p1 = pol[i - 1];
-        let p2 = pol[i];
+    var i = 0;
+    while (i + 1 < pol.length) {
+        let p1 = pol[i];
+        let p2 = pol[i + 1];
         if (p1 !== p2 && p1.toLowerCase() === p2.toLowerCase()) {
             // reaction!
-            pol.splice(i - 1, 2);
-            i = i - 2 > 0 ? i - 2 : 0;
+            pol.splice(i, 2);
+            i = i - 2 < 0 ? 0 : i - 2;
+        } else {
+            i++;
         }
     }
     return pol.length;
@@ -22,11 +25,7 @@ function trigger(polymer) {
 
 function optimize(polymer) {
     var unitTypes = 'abcdefghijkklmnopqrstuvwxyz'.split('').map(c => [c, c.toUpperCase()]);
-    var results = unitTypes.map(([p1, p2]) => {
-        var pol = [...polymer].filter(c => c !== p1 && c !== p2);
-        var res = trigger(pol);
-        return res;
-    });
+    var results = unitTypes.map(([t1, t2]) => trigger(polymer.filter(t => t !== t1 && t !== t2)));
     return min(results);
 }
 

@@ -1,4 +1,4 @@
-import { count, getData, getPath, min, max, range } from '../lib/utils.js';
+import { count, getData, getPath, min, max, range, sum } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
@@ -93,7 +93,7 @@ function p2() {
 				? 1 : 0;
 		});
 	});
-	return grid.flat().reduce((acc, curr) => acc + curr, 0);
+	return sum(grid.flat());
 }
 
 console.log('Part 1:', p1());

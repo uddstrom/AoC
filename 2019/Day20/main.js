@@ -17,17 +17,15 @@ var NORTH = 0,
     WEST = 3;
 
 function getNeighbours([r, c], grid) {
-    var neighbors = DR.map((dr, i) => {
+    return DR.map((dr, i) => {
         var rr = r + dr;
         var cc = c + DC[i];
         return rr >= 0 && rr < ROWS && cc >= 0 && cc < COLS ? grid[rr][cc] : null;
     });
-    return neighbors;
 }
 
 function isOuterPortal(r, c) {
-    var isouter = r === 2 || r === ROWS - 3 || c === 2 || c === COLS - 3;
-    return isouter;
+    return r === 2 || r === ROWS - 3 || c === 2 || c === COLS - 3;
 }
 
 function findPortal(portal, grid, recursive = false) {

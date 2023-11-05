@@ -2,33 +2,23 @@ import IntcodeComputer from '../lib/IntcodeComputer.js';
 import { getData, getPath } from '../lib/utils.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
-var parser = (input) => {
-    return input.split(',').map(Number);
-};
+var parser = (input) => input.split(',').map(Number);
 
-function run(computer) {
-    var output = [];
-    var terminateProgram = false;
-    while (!terminateProgram) {
-        var { value: out, done } = computer.next();
-        out && output.push(out);
-        terminateProgram = done;
-    }
-    return output;
-}
-
-function render(output) {
-    var ans = output.pop();
-    var rend = output
-        .map((c) => String.fromCharCode(c))
+function run(asciiProgram) {
+    var intCodeProgram = getData(PUZZLE_INPUT_PATH)(parser);
+    var input = asciiProgram
         .join('')
-        .trim();
-    return ans > 10 ? rend + ans : rend;
+        .split('')
+        .map((chr) => chr.charCodeAt(0));
+    var computer = IntcodeComputer(intCodeProgram, true, input);
+    var output = Array.from(computer);
+    var ans = output.pop();
+    var rendering = output.map((c) => String.fromCharCode(c)).join('');
+
+    return ans > 10 ? ans : '\n\n' + rendering;
 }
 
-var program = getData(PUZZLE_INPUT_PATH)(parser);
-
-var asciiProgram = [
+var asciiProgramWalk = [
     'NOT A T\n',
     'OR T J\n',
     'NOT B T\n',
@@ -39,14 +29,19 @@ var asciiProgram = [
     'WALK\n',
 ];
 
-// var asciiProgram = ['NOT D J\n', 'WALK\n'];
+var asciiProgramRun = [
+    'NOT A T\n',
+    'OR T J\n',
+    'NOT B T\n',
+    'OR T J\n',
+    'NOT C T\n',
+    'OR T J\n',
+    'AND D J\n',
+    'AND E T\n',
+    'OR H T\n',
+    'AND T J\n',
+    'RUN\n',
+];
 
-var input = asciiProgram
-    .join('')
-    .split('')
-    .map((chr) => chr.charCodeAt(0));
-
-var computer = IntcodeComputer(program, true, input);
-
-console.log(`Part 1:\n\n${render(run(computer))}`);
-console.log('Part 2:');
+console.log('Part 1:', run(asciiProgramWalk));
+console.log('Part 2:', run(asciiProgramRun));

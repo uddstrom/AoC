@@ -1,5 +1,4 @@
 import { getData, getPath, min } from '../lib/utils.js';
-
 import { trampoline } from '../lib/fn.js';
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;

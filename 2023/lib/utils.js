@@ -105,3 +105,6 @@ export var triangularNumber = (n) => (n * (n + 1)) / 2;
 export var gcd = (a, b) => (a == 0 ? b : gcd(b % a, a));
 // Least Common Multiple
 export var lcm = (a, b) => (a * b) / gcd(a, b);
+
+// Returns LCM of array elements
+export var lcmOfArray = (arr) => arr.reduce((acc, curr) => (curr * acc) / gcd(curr, acc));

@@ -11,10 +11,7 @@ var data = getData(PUZZLE_INPUT_PATH)(parser);
 function createExtrapolator(backwards) {
     return function extrapolate(seq) {
         if (seq.every((n) => n === 0)) return backwards ? [0, ...seq] : [...seq, 0];
-        var nextSeq = extrapolate(
-            seq.slice(1).map((n, i) => n - seq[i]),
-            backwards
-        );
+        var nextSeq = extrapolate(seq.slice(1).map((n, i) => n - seq[i]));
         return backwards ? [seq[0] - nextSeq[0], ...seq] : [...seq, seq.pop() + nextSeq.pop()];
     };
 }

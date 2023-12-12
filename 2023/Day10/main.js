@@ -7,12 +7,11 @@ function parser(input) {
     return input.split('\n').map((row) => row.split(''));
 }
 
-var UP = 'S|F7';
-var DOWN = 'S|JL';
-var LEFT = 'S-LF';
-var RIGHT = 'S-J7';
-
 function createGraph(matrix) {
+    var UP = 'S|F7';
+    var DOWN = 'S|JL';
+    var LEFT = 'S-LF';
+    var RIGHT = 'S-J7';
     var G = new Map();
     var start;
     matrix.forEach((row, r) => {
@@ -62,19 +61,12 @@ function createGraph(matrix) {
 function getStartType(start, neighbors) {
     var [r, c] = start.split(',').map(Number);
     var [[r1, c1], [r2, c2]] = neighbors.map((n) => n.split(',').map(Number));
-
-    if (r1 < r && c2 < c) return 'J';
-    if (r2 < r && c1 < c) return 'J';
-    if (r1 < r && c2 > c) return 'L';
-    if (r2 < r && c1 > c) return 'L';
-    if (r1 < r && c2 === c) return '|';
-    if (r2 < r && c1 === c) return '|';
-    if (r1 > r && c2 < c) return '7';
-    if (r2 > r && c1 < c) return '7';
-    if (r1 > r && c2 > c) return 'F';
-    if (r2 > r && c1 > c) return 'F';
-    if (c1 > c && c2 < c) return '-';
-    if (c2 > c && c1 < c) return '-';
+    if ((r1 < r && c2 < c) || (r2 < r && c1 < c)) return 'J';
+    if ((r1 < r && c2 > c) || (r2 < r && c1 > c)) return 'L';
+    if ((r1 < r && c2 === c) || (r2 < r && c1 === c)) return '|';
+    if ((r1 > r && c2 < c) || (r2 > r && c1 < c)) return '7';
+    if ((r1 > r && c2 > c) || (r2 > r && c1 > c)) return 'F';
+    if ((c1 > c && c2 < c) || (c2 > c && c1 < c)) return '-';
 }
 
 var loopPipes = trampoline(function loopPipes(graph, start, current = start, pipes = []) {
@@ -92,7 +84,7 @@ function removeJunk(maze, loop, startType) {
     );
 }
 
-function tagEnclosed(maze, enclosed) {
+function markEnclosed(maze, enclosed) {
     return maze.map((row, r) => row.map((col, c) => (enclosed.some(([rr, cc]) => r === rr && c === cc) ? 'x' : col)));
 }
 
@@ -114,21 +106,21 @@ function print(maze) {
 }
 
 function isEnclosed(maze, start) {
-    var G = maze.map((row, r) => row.map((col, c) => ({ r, c, type: col, explored: false })));
     var rows = maze.length - 1;
     var cols = maze[0].length - 1;
-    start.explored = true;
+    var explored = new Set();
+    explored.add(`${start.r},${start.c}`);
     var Q = [start];
+
     while (Q.length > 0) {
         let v = Q.shift();
         let { r, c } = v;
-        if (r === 0 || r === rows || c === 0 || c === cols) {
-            console.log('UTE!', v);
-            return false;
-        }
-        for (let w of neighbors(G, v)) {
-            if (!w.explored) {
-                w.explored = true;
+        if (r === 0 || r === rows || c === 0 || c === cols) return false;
+        for (let w of neighbors(maze, v)) {
+            let { r, c, side } = w;
+            if (!explored.has(`${r},${c},${side}`)) {
+                explored.add(`${r},${c},${side}`);
+                w.parent = v;
                 Q.push(w);
             }
         }
@@ -138,146 +130,82 @@ function isEnclosed(maze, start) {
 
 function neighbors(G, pos) {
     var N = [];
-    var { r, c, type, side } = pos;
+    var { r, c, side } = pos;
+    var type = G[r][c];
+
     // ok to go up?
-    if (G[r - 1]) {
-        if (G[r - 1][c].type === '.') {
-            if (!(type === '-' && side === 'down')) N.push(G[r - 1][c]);
-        }
-        if (G[r - 1][c].type === 'L') {
-            G[r - 1][c].side = 'left';
-            N.push(G[r - 1][c]);
-        }
-        if (G[r - 1][c].type === 'J') {
-            G[r - 1][c].side = 'right';
-            N.push(G[r - 1][c]);
-        }
-        if (G[r - 1][c].type === '|') {
-            if (type === 'J') G[r - 1][c].side = 'right';
-            else if (type === 'L') G[r - 1][c].side = 'left';
-            else G[r - 1][c].side = side;
-            N.push(G[r - 1][c]);
-        }
-        if (G[r - 1][c].type === 'F' && side === 'left') {
-            G[r - 1][c].side = side;
-            N.push(G[r - 1][c]);
-        }
-        if (G[r - 1][c].type === '7' && side === 'right') {
-            G[r - 1][c].side = side;
-            N.push(G[r - 1][c]);
+    if (G[r - 1] && !(type === '-' && side === 'down')) {
+        if (G[r - 1][c] === '.') N.push({ r: r - 1, c });
+        if (G[r - 1][c] === '-') N.push({ r: r - 1, c, side: 'down' });
+        if (G[r - 1][c] === 'L') N.push({ r: r - 1, c, side: 'left' });
+        if (G[r - 1][c] === 'J') N.push({ r: r - 1, c, side: 'right' });
+        if (G[r - 1][c] === 'F' && side === 'left') N.push({ r: r - 1, c, side: 'left' });
+        if (G[r - 1][c] === '7' && side === 'right') N.push({ r: r - 1, c, side: 'right' });
+        if (G[r - 1][c] === '|') {
+            if (type === 'J') N.push({ r: r - 1, c, side: 'right' });
+            else if (type === 'L') N.push({ r: r - 1, c, side: 'left' });
+            else N.push({ r: r - 1, c, side });
         }
     }
 
     // ok to go down?
-    if (G[r + 1]) {
-        if (G[r + 1][c].type === '.') {
-            if (!(type === '-' && side === 'up')) N.push(G[r + 1][c]);
-        }
-        if (G[r + 1][c].type === 'F') {
-            G[r + 1][c].side = 'left';
-            N.push(G[r + 1][c]);
-        }
-        if (G[r + 1][c].type === '7') {
-            G[r + 1][c].side = 'right';
-            N.push(G[r + 1][c]);
-        }
-        if (G[r + 1][c].type === '|') {
-            if (type === '7') G[r + 1][c].side = 'right';
-            else if (type === 'F') G[r + 1][c].side = 'left';
-            else G[r + 1][c].side = side;
-            N.push(G[r + 1][c]);
-        }
-        if (G[r + 1][c].type === 'L' && side === 'left') {
-            G[r + 1][c].side = side;
-            N.push(G[r + 1][c]);
-        }
-        if (G[r + 1][c].type === 'J' && side === 'right') {
-            G[r + 1][c].side = side;
-            N.push(G[r + 1][c]);
+    if (G[r + 1] && !(type === '-' && side === 'up')) {
+        if (G[r + 1][c] === '.') N.push({ r: r + 1, c });
+        if (G[r + 1][c] === '-') N.push({ r: r + 1, c, side: 'up' });
+        if (G[r + 1][c] === 'F') N.push({ r: r + 1, c, side: 'left' });
+        if (G[r + 1][c] === '7') N.push({ r: r + 1, c, side: 'right' });
+        if (G[r + 1][c] === 'L' && side === 'left') N.push({ r: r + 1, c, side: 'left' });
+        if (G[r + 1][c] === 'J' && side === 'right') N.push({ r: r + 1, c, side: 'right' });
+        if (G[r + 1][c] === '|') {
+            if (type === '7') N.push({ r: r + 1, c, side: 'right' });
+            else if (type === 'F') N.push({ r: r + 1, c, side: 'left' });
+            else N.push({ r: r + 1, c, side });
         }
     }
 
     // ok to go left?
-    if (G[r][c - 1].type === '.') {
-        if (!(type === '|' && side === 'right')) N.push(G[r][c - 1]);
-    }
-    if (G[r][c - 1].type === '7') {
-        G[r][c - 1].side = 'up';
-        N.push(G[r][c - 1]);
-    }
-    if (G[r][c - 1].type === 'J') {
-        G[r][c - 1].side = 'down';
-        N.push(G[r][c - 1]);
-    }
-    if (G[r][c - 1].type === '-') {
-        if (type === '7') G[r][c - 1].side = 'up';
-        else if (type === 'J') G[r][c - 1].side = 'down';
-        else G[r][c - 1].side = side;
-        N.push(G[r][c - 1]);
-    }
-    if (G[r][c - 1].type === 'L' && side === 'down') {
-        G[r][c - 1].side = side;
-        N.push(G[r][c - 1]);
-    }
-    if (G[r][c - 1].type === 'F' && side === 'up') {
-        G[r][c - 1].side = side;
-        N.push(G[r][c - 1]);
+    if (!(type === '|' && side === 'right')) {
+        if (G[r][c - 1] === '.') N.push({ r, c: c - 1 });
+        if (G[r][c - 1] === '|') N.push({ r, c: c - 1, side: 'right' });
+        if (G[r][c - 1] === '7') N.push({ r, c: c - 1, side: 'up' });
+        if (G[r][c - 1] === 'J') N.push({ r, c: c - 1, side: 'down' });
+        if (G[r][c - 1] === 'L' && side === 'down') N.push({ r, c: c - 1, side: 'down' });
+        if (G[r][c - 1] === 'F' && side === 'up') N.push({ r, c: c - 1, side: 'up' });
+        if (G[r][c - 1] === '-') {
+            if (type === '7') N.push({ r, c: c - 1, side: 'up' });
+            else if (type === 'J') N.push({ r, c: c - 1, side: 'down' });
+            else N.push({ r, c: c - 1, side });
+        }
     }
 
     // ok to go right?
-    if (G[r][c + 1].type === '.') {
-        if (!(type === '|' && side === 'left')) N.push(G[r][c + 1]);
+    if (!(type === '|' && side === 'left')) {
+        if (G[r][c + 1] === '.') N.push({ r, c: c + 1 });
+        if (G[r][c + 1] === '|') N.push({ r, c: c + 1, side: 'left' });
+        if (G[r][c + 1] === 'F') N.push({ r, c: c + 1, side: 'up' });
+        if (G[r][c + 1] === 'L') N.push({ r, c: c + 1, side: 'down' });
+        if (G[r][c + 1] === 'J' && side === 'down') N.push({ r, c: c + 1, side: 'down' });
+        if (G[r][c + 1] === '7' && side === 'up') N.push({ r, c: c + 1, side: 'up' });
+        if (G[r][c + 1] === '-') {
+            if (type === 'F') N.push({ r, c: c + 1, side: 'up' });
+            else if (type === 'L') N.push({ r, c: c + 1, side: 'down' });
+            else N.push({ r, c: c + 1, side });
+        }
     }
-    if (G[r][c + 1].type === 'F') {
-        G[r][c + 1].side = 'up';
-        N.push(G[r][c + 1]);
-    }
-    if (G[r][c + 1].type === 'L') {
-        G[r][c + 1].side = 'down';
-        N.push(G[r][c + 1]);
-    }
-    if (G[r][c + 1].type === '-') {
-        if (type === 'F') G[r][c + 1].side = 'up';
-        else if (type === 'L') G[r][c + 1].side = 'down';
-        else G[r][c + 1].side = side;
-        N.push(G[r][c + 1]);
-    }
-    if (G[r][c + 1].type === 'J' && side === 'down') {
-        G[r][c + 1].side = side;
-        N.push(G[r][c + 1]);
-    }
-    if (G[r][c + 1].type === '7' && side === 'up') {
-        G[r][c + 1].side = side;
-        N.push(G[r][c + 1]);
-    }
-    console.log(pos, N);
+
     return N;
 }
 
 var maze = getData(PUZZLE_INPUT_PATH)(parser);
-
 var [graph, start, startType] = createGraph(maze);
 var loop = loopPipes(graph, start);
 var mazeWithoutJunkPipes = removeJunk(maze, loop, startType);
+var enclosed = mazeWithoutJunkPipes.flatMap((row, r) =>
+    row
+        .map((col, c) => (col === '.' && isEnclosed(mazeWithoutJunkPipes, { r, c }) ? [r, c] : undefined))
+        .filter((x) => x)
+);
 
-// var enclosed = mazeWithoutJunkPipes.flatMap((row, r) =>
-//     row
-//         .map((col, c) => {
-//             if (col === '.' && isEnclosed(mazeWithoutJunkPipes, { r, c, type: col })) {
-//                 return [r, c];
-//             }
-//         })
-//         .filter((x) => x)
-// );
-// var mazeWithoutJunkPipesAndEnclosed = tagEnclosed(mazeWithoutJunkPipes, enclosed);
-
-// console.log('Part 1:', Math.floor(loop.length / 2));
-// console.log('Part 2:', enclosed.filter(Boolean).length);
-
-//print(mazeWithoutJunkPipesAndEnclosed);
-print(mazeWithoutJunkPipes);
-
-var x = isEnclosed(mazeWithoutJunkPipes, { r: 6, c: 14, type: '.' });
-console.log(x);
-
-// 728 too high
+print(markEnclosed(mazeWithoutJunkPipes, enclosed));
+console.log('Part 1:', Math.floor(loop.length / 2));
+console.log('Part 2:', enclosed.filter(Boolean).length);

@@ -1,4 +1,4 @@
-import { PrioQ } from "../lib/PrioQ.js";
+import { HeapQ } from "../lib/HeapQ.js";
 import { getData, getPath, sum } from "../lib/utils.js";
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
@@ -8,10 +8,10 @@ function parser(input) {
 }
 
 function solve(grid, start, goal, p2) {
-    var compareFn = (n1, n2) => n1.g - n2.g;
+    var compareFn = (n1, n2) => n1.g < n2.g;
     var id = ({ r, c, dir, steps }) => `${r},${c},${dir},${steps}`;
 
-    var openSet = new PrioQ(compareFn, id);
+    var openSet = new HeapQ(id, compareFn);
     var visited = new Map();
 
     start.g = 0;

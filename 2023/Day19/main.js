@@ -9,8 +9,8 @@ function parser(input) {
         var { name, rules } = workflow.match(/(?<name>[a-z]+){(?<rules>.*)}/).groups;
         var R = rules.split(",").map((rule) => {
             var condition = rule.split(":")[0];
-            var next = rule.split(":")[1];
-            return next ? { condition, next } : { next: condition };
+            var nextWorkflow = rule.split(":")[1];
+            return nextWorkflow ? { condition, nextWorkflow } : { nextWorkflow: condition };
         });
         W.set(name, R);
     });
@@ -28,88 +28,67 @@ function evaluate(part, condition) {
 }
 
 function processPart(part, workflowId) {
-    if (workflowId === "R") return 0;
-    if (workflowId === "A") return sum(Object.values(part));
+    if (workflowId === "R") return 0; // rejected
+    if (workflowId === "A") return sum(Object.values(part)); // accepted
 
     var workflow = workflowId ? workflows.get(workflowId) : workflows.get("in");
 
-    for (let { condition, next } of workflow) {
-        if (evaluate(part, condition)) return processPart(part, next);
+    for (let { condition, nextWorkflow } of workflow) {
+        if (evaluate(part, condition)) return processPart(part, nextWorkflow);
     }
 }
 
-function findWorkflowPaths(
-    xmin = 1,
-    xmax = 4000,
-    mmin = 1,
-    mmax = 4000,
-    amin = 1,
-    amax = 4000,
-    smin = 1,
-    smax = 4000,
-    wid = "in"
-) {
-    if (wid === "A") return (xmax - xmin + 1) * (mmax - mmin + 1) * (amax - amin + 1) * (smax - smin + 1);
+function getNewRange(op, value, lo, hi) {
+    if (op === "<") hi = min([hi, value - 1]);
+    if (op === ">") lo = max([lo, value + 1]);
+    return [lo, hi];
+}
+
+function getNewRanges(prop, op, value, xl, xh, ml, mh, al, ah, sl, sh) {
+    if (prop === "x") {
+        let [lo, hi] = getNewRange(op, value, xl, xh);
+        return [lo, hi, ml, mh, al, ah, sl, sh];
+    }
+    if (prop === "m") {
+        let [lo, hi] = getNewRange(op, value, ml, mh);
+        return [xl, xh, lo, hi, al, ah, sl, sh];
+    }
+    if (prop === "a") {
+        let [lo, hi] = getNewRange(op, value, al, ah);
+        return [xl, xh, ml, mh, lo, hi, sl, sh];
+    }
+    if (prop === "s") {
+        let [lo, hi] = getNewRange(op, value, sl, sh);
+        return [xl, xh, ml, mh, al, ah, lo, hi];
+    }
+}
+
+function findWorkflowPaths(wid = "in", xl = 1, xh = 4000, ml = 1, mh = 4000, al = 1, ah = 4000, sl = 1, sh = 4000) {
+    if (wid === "A") return (xh - xl + 1) * (mh - ml + 1) * (ah - al + 1) * (sh - sl + 1);
     if (wid === "R") return 0;
 
     var workflow = workflows.get(wid);
     var acceptCnt = 0;
 
-    for (let { condition, next } of workflow) {
+    for (let { condition, nextWorkflow } of workflow) {
         if (condition === undefined) {
-            acceptCnt += findWorkflowPaths(xmin, xmax, mmin, mmax, amin, amax, smin, smax, next);
+            acceptCnt += findWorkflowPaths(nextWorkflow, xl, xh, ml, mh, al, ah, sl, sh);
         } else {
-            let { prop, cond, value } = condition.match(/(?<prop>.+)(?<cond>\<|\>)(?<value>\d+)/).groups;
+            let { prop, op, value } = condition.match(/(?<prop>.+)(?<op>\<|\>)(?<value>\d+)/).groups;
             value = Number(value);
-            let xxmin = xmin;
-            let xxmax = xmax;
-            let mmmin = mmin;
-            let mmmax = mmax;
-            let aamin = amin;
-            let aamax = amax;
-            let ssmin = smin;
-            let ssmax = smax;
-            if (prop === "x") {
-                if (cond === "<") {
-                    xxmax = min([xmax, value - 1]);
-                    xmin = max([xmin, value]);
-                }
-                if (cond === ">") {
-                    xxmin = max([xmin, value + 1]);
-                    xmax = min([xmax, value]);
-                }
-            }
-            if (prop === "m") {
-                if (cond === "<") {
-                    mmmax = min([mmax, value - 1]);
-                    mmin = max([mmin, value]);
-                }
-                if (cond === ">") {
-                    mmmin = max([mmin, value + 1]);
-                    mmax = min([mmax, value]);
-                }
-            }
-            if (prop === "a") {
-                if (cond === "<") {
-                    aamax = min([amax, value - 1]);
-                    amin = max([amin, value]);
-                }
-                if (cond === ">") {
-                    aamin = max([amin, value + 1]);
-                    amax = min([amax, value]);
-                }
-            }
-            if (prop === "s") {
-                if (cond === "<") {
-                    ssmax = min([smax, value - 1]);
-                    smin = max([smin, value]);
-                }
-                if (cond === ">") {
-                    ssmin = max([smin, value + 1]);
-                    smax = min([smax, value]);
-                }
-            }
-            acceptCnt += findWorkflowPaths(xxmin, xxmax, mmmin, mmmax, aamin, aamax, ssmin, ssmax, next);
+            acceptCnt += findWorkflowPaths(
+                nextWorkflow,
+                ...getNewRanges(prop, op, value, xl, xh, ml, mh, al, ah, sl, sh)
+            );
+
+            if (prop === "x" && op === "<") xl = max([xl, value]);
+            if (prop === "x" && op === ">") xh = min([xh, value]);
+            if (prop === "m" && op === "<") ml = max([ml, value]);
+            if (prop === "m" && op === ">") mh = min([mh, value]);
+            if (prop === "a" && op === "<") al = max([al, value]);
+            if (prop === "a" && op === ">") ah = min([ah, value]);
+            if (prop === "s" && op === "<") sl = max([sl, value]);
+            if (prop === "s" && op === ">") sh = min([sh, value]);
         }
     }
     return acceptCnt;

@@ -1,60 +1,9 @@
-import { getData, getPath, intersect, matrix, max, range } from "../lib/utils.js";
+import { getData, getPath, intersect, range, sum } from "../lib/utils.js";
 
 var PUZZLE_INPUT_PATH = `${getPath(import.meta.url)}/puzzle_input`;
 
 function parser(input) {
     return input.split("\n").map((line) => line.split("~").map((v) => v.split(",").map(Number)));
-}
-
-function print(bricks) {
-    function printMatrix(M) {
-        M.forEach((row) => console.log(row));
-    }
-
-    var X =
-        max(
-            bricks.map((v) => {
-                var [[x1, y1, z1], [x2, y2, z2]] = v;
-                return max([x1, x2]);
-            })
-        ) + 1;
-
-    var Y =
-        max(
-            bricks.map((v) => {
-                var [[x1, y1, z1], [x2, y2, z2]] = v;
-                return max([y1, y2]);
-            })
-        ) + 1;
-
-    var Z =
-        max(
-            bricks.map((v) => {
-                var [[x1, y1, z1], [x2, y2, z2]] = v;
-                return max([z1, z2]);
-            })
-        ) + 1;
-
-    var brickIds = "ABCDEFGHIJ";
-    var space = Array(Z)
-        .fill()
-        .map((l) => matrix(X, Y, ""));
-
-    bricks.forEach((v, i) => {
-        var [[x1, y1, z1], [x2, y2, z2]] = v;
-        for (let z = z1; z <= z2; z++) {
-            for (let y = y1; y <= y2; y++) {
-                for (let x = x1; x <= x2; x++) {
-                    space[z][y][x] = brickIds.charAt(i);
-                }
-            }
-        }
-    });
-
-    for (let z = Z - 1; z > 0; z--) {
-        console.log(`-- z: ${z} --------------`);
-        printMatrix(space[z]);
-    }
 }
 
 function overlaps(a1, a2, b1, b2) {
@@ -78,36 +27,46 @@ function bricksAbove(brick, B) {
 }
 
 function mergeDown(B) {
-    var bricksMovedCount = 0;
+    var bricksMoved = 0;
     B.forEach((brick) => {
         // z coord of brick z > 1, otherwise brick is at lowest z already
-        if (brick[0][2] > 1) {
-            if (bricksBelow(brick, B).length === 0) {
-                // move down
-                // console.log("nothing below brick", brick);
-                bricksMovedCount++;
-                brick[0][2] = brick[0][2] - 1;
-                brick[1][2] = brick[1][2] - 1;
-                // console.log("moved down to", brick);
-            }
+        while (brick[0][2] > 1 && bricksBelow(brick, B).length === 0) {
+            bricksMoved++;
+            brick[0][2] = brick[0][2] - 1;
+            brick[1][2] = brick[1][2] - 1;
         }
     });
-    return bricksMovedCount;
+    return bricksMoved > 0;
 }
 
-function canBeDisintegrated(brick, B) {
+function settle(B) {
+    let BB = structuredClone(B);
+    while (mergeDown(BB));
+    return BB;
+}
+
+function disintegrate(brick, B) {
     for (let b of bricksAbove(brick, B)) {
-        if (!bricksBelow(b, B).some((b) => b !== brick)) return false;
+        if (!bricksBelow(b, B).some((b) => b !== brick)) {
+            let unsettled = B.filter((b) => b !== brick);
+            let settled = settle(unsettled.filter((b) => b !== brick));
+            let bricksThatMoved = unsettled
+                .map((b, i) => b.toString() !== settled[i].toString())
+                .filter(Boolean).length;
+            return bricksThatMoved;
+        }
     }
-    return true;
+    return 0;
 }
 
-var B = getData(PUZZLE_INPUT_PATH)(parser);
+var data = getData(PUZZLE_INPUT_PATH)(parser);
 
-var i = mergeDown(B);
-while (i > 0) i = mergeDown(B);
+var settledBricks = settle(data);
+var D = settledBricks.map((brick) => disintegrate(brick, settledBricks));
 
-var p1 = B.map((brick) => canBeDisintegrated(brick, B)).filter(Boolean).length;
+var p1 = D.filter((n) => n === 0).length;
+var p2 = sum(D);
 
-console.log("Part 1:", p1);
-// console.log("Part 2:");
+// ~5 min to calculate answer.
+console.log("Part 1:", p1); // 413
+console.log("Part 2:", p2); // 41610

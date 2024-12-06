@@ -15,6 +15,10 @@ export function getPath(url) {
     return dirname(fileURLToPath(url));
 }
 
+export function removeAt(array, index) {
+    return array.slice(0, index).concat(array.slice(index + 1, array.length));
+}
+
 export function rng(length) {
     return Array(length)
         .fill()

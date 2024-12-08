@@ -29,9 +29,11 @@ function xmasSearch(grid, r, c) {
 
 function x_masSearch(grid, r, c) {
     if (grid[r][c] !== 'A') return 0;
-    var PATTERNS = ['MMSS', 'MSMS', 'SSMM', 'SMSM'];
-    var p = [[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([dr, dc]) => (grid[r + dr] && grid[r + dr][c + dc]) ?? '').join('');
-    return PATTERNS.some(pattern => p === pattern) ? 1 : 0;
+    var CORNER_PATTERNS = ['MMSS', 'MSMS', 'SSMM', 'SMSM']; // topleft, topright, bottomleft, bottomright
+    var p = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+        .map(([dr, dc]) => (grid[r + dr] && grid[r + dr][c + dc]) ?? '')
+        .join('');
+    return CORNER_PATTERNS.some(pattern => p === pattern) ? 1 : 0;
 }
 
 

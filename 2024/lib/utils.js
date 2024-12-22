@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { not } from './fn.js';
 
 export function getData(path) {
-    var contents = fs.readFileSync(path, 'utf8');
+    var contents = fs.readFileSync(path, 'utf8').trim();
     return function parseContent(parser) {
         return parser(contents);
     };

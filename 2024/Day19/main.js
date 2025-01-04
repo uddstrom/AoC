@@ -9,13 +9,11 @@ function parser(input) {
 
 var [TOWELS, DESIGNS] = getData(PUZZLE_INPUT_PATH)(parser);
 
-var INVALID = new Set();
-var VALID = new Map();
+var DP = new Map();
 
 function options(design) {
     if (design.length === 0) return 1;
-    if (INVALID.has(design)) return 0;
-    if (VALID.has(design)) return VALID.get(design);
+    if (DP.has(design)) return DP.get(design);
 
     var cnt = 0;
     for (let l = 1; l <= design.length; l++) {
@@ -27,9 +25,7 @@ function options(design) {
         }
     }
 
-    if (cnt > 0) VALID.set(design, cnt);
-    else INVALID.add(design);
-
+    DP.set(design, cnt);
     return cnt;
 }
 

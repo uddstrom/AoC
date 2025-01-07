@@ -28,34 +28,23 @@ var down = new Map([['<', ['<']], ['>', ['>']], ['^', ['^']], ['v', ['']], ['A',
 var a = new Map([['<', ['v<<']], ['>', ['v']], ['^', ['<']], ['v', ['<v', 'v<']], ['A', ['']]]);
 var dirPadMap = new Map([['<', left], ['>', right], ['^', up], ['v', down], ['A', a]]);
 
-var byLength = (str1, str2) => str1.length - str2.length;
+var complexity = (code, seq_length) => Number(code.join('').substring(0, 3)) * seq_length;
 
-var DP = new Map();
-
-function getSubSequence(seq, depth = 0) {
+function getSubSequence(seq, target_depth, depth = 0, DP = new Map()) {
     if (DP.has(`${depth},${seq}`)) return DP.get(`${depth},${seq}`);
-    if (depth === 26) return seq.join('');
+    if (depth === target_depth) return seq.length;
     var map = depth === 0 ? numPadMap : dirPadMap;
     var from = 'A';
     var sub = seq.flatMap(to => {
         var paths = map.get(from).get(to);
-        var S = paths.map(seq => getSubSequence([...seq.split(''), 'A'], depth + 1));
+        var S = paths.map(seq => getSubSequence([...seq.split(''), 'A'], target_depth, depth + 1, DP));
         from = to;
-        return S.sort(byLength)[0];
+        return S.sort((a, b) => a - b)[0];
     });
 
-    console.log(sub);
-    DP.set(`${depth},${seq}`, sub.join(''));
-    return sub.join('');
+    DP.set(`${depth},${seq}`, sum(sub));
+    return sum(sub);
 }
 
-function complexity(code, seq) {
-    var c = Number(code.join('').substring(0, 3)) * seq.length;
-    return c;
-}
-
-var p1 = sum(data.map(code => complexity(code, getSubSequence(code))));
-
-console.log('Part 1:', p1);
-console.log('Part 2:');
-
+console.log('Part 1:', sum(data.map(code => complexity(code, getSubSequence(code, 3)))));
+console.log('Part 2:', sum(data.map(code => complexity(code, getSubSequence(code, 26)))));

@@ -112,3 +112,7 @@ export var lcm = (a, b) => (a * b) / gcd(a, b);
 
 // Returns LCM of array elements
 export var lcmOfArray = (arr) => arr.reduce((acc, curr) => (curr * acc) / gcd(curr, acc));
+
+// Fix for the javascript mod bug
+// https://web.archive.org/web/20090717035140if_/javascript.about.com/od/problemsolving/a/modulobug.htm
+export var mod = (x, y) => ((x % y) + y) % y;

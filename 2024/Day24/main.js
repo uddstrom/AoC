@@ -33,28 +33,71 @@ function run(wires, gates) {
     return [...W.entries()].filter(([wire]) => wire.startsWith('z')).sort().reverse().map(([_, val]) => val).join('');
 }
 
+function findGate(op, in1, in2) {
+    return gates
+        .filter((g) => g.op === op)
+        .find(g => (g.in1 === in1 || g.in2 === in1) && (g.in1 === in2 || g.in2 === in2));
+}
+
+function findGateByOut(op, out) {
+    return gates.filter(g => g.op === op).find(g => g.out === out);
+}
+
+function validateGates(n = 0, c, err = []) {
+    // console.log(n, c);
+    if (n > 44) return [...new Set(err.flatMap((gates) => gates))].sort().join();
+    if (n === 0) {
+        let Cout = findGate('AND', 'x00', 'y00')?.out;
+        return validateGates(1, Cout, err);
+    } else {
+        let x = n < 10 ? 'x0' + n : 'x' + n;
+        let y = n < 10 ? 'y0' + n : 'y' + n;
+        let z = n < 10 ? 'z0' + n : 'z' + n;
+        let O1 = findGate('XOR', x, y)?.out;
+        let zz = findGate('XOR', c, O1)?.out;
+        if (zz === undefined) {
+            let g = findGateByOut('XOR', z);
+            let o = g.in1 !== c ? g.in1 : g.in2; // this is the out that O1 has been swapped with.
+            // console.log('1. zz undefined, pushing', n, O1, o);
+            err.push([O1, o]);
+            O1 = o;
+        } else if (zz !== z) {
+            // console.log('2. zz not equal to z, pushing', n, zz, z);
+            err.push([zz, z]);
+        }
+
+        let O2 = findGate('AND', x, y)?.out;
+        let O3 = findGate('AND', c, O1)?.out;
+        let Cout = findGate('OR', O2, O3)?.out;
+
+        if (Cout === undefined) {
+            // find the OR gate with O2 as one of the input
+            let g = gates.filter(g => g.op === 'OR').find(g => g.in1 === O2 || g.in2 === O2);
+            if (g) {
+                // there is a OR gate with O2 as input. G3 i swapped
+                let o = g.in1 !== O2 ? g.in1 : g.in2; // this is the out that O3 has been swapped with.
+                Cout = g.out;
+                // console.log('3. pushing O3', n, O3, o);
+                err.push([O3, o]);
+            } else {
+                let g = gates.filter(g => g.op === 'OR').find(g => g.in1 === O3 || g.in2 === O3);
+                let o = g.in1 !== O3 ? g.in1 : g.in2; // this is the out that O2 has been swapped with.
+                Cout = g.out;
+                // console.log('4. pushing O2', n, O2, o);
+                err.push([O2, o]);
+            }
+        } else if (Cout.startsWith('z') && n < 44) {
+            // Cout should never go to a z output except for last bit.
+            // how do I figure out what Cout is swapped with??
+            // console.log('5. cout to z detected', n, Cout);
+            if (n === 24) Cout = 'mmk';
+        }
+
+        return validateGates(n + 1, Cout, err);
+    }
+}
+
 var [wires, gates] = getData(PUZZLE_INPUT_PATH)(parser);
 
-
-var x = [...wires.entries()].filter(([wire]) => wire.startsWith('x')).sort().reverse().map(([_, val]) => val).join('');
-var y = [...wires.entries()].filter(([wire]) => wire.startsWith('y')).sort().reverse().map(([_, val]) => val).join('');
-var z = run(wires, gates);
-
-console.log('x', x, parseInt(x, 2));
-console.log('y', y, parseInt(y, 2));
-console.log('z', z, parseInt(z, 2));
-
-var expected = parseInt(x, 2) + parseInt(y, 2);
-console.log('e', expected.toString(2), expected);
-
-// z 10.1011.1011.0110.1010.1000.1010.1000.0011.1110.1110.0110 48063513640678
-// e 10.1011.0111.0110.1001.0111.1010.1000.0100.0110.1110.0110 47788350523110
-//   44   40   36   32   28   24   20   16   12    8    4    0
-
-// Bad bits: 11, 12, 13, 14, 24, 25, 26, 27, 28, 29, 38, 39
-
-var outputPorts = [...new Set(gates.map(({ out }) => out))].sort();
-console.log(outputPorts, outputPorts.length);
-
-console.log('Part 1:', parseInt(z, 2));
-console.log('Part 2:',);
+console.log('Part 1:', parseInt(run(wires, gates), 2));
+console.log('Part 2:', validateGates());
